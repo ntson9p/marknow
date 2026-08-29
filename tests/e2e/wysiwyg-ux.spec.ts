@@ -42,8 +42,13 @@ test.describe('WYSIWYG UX polish (M4)', () => {
     await expect(editor(page).locator('strong')).toHaveText('format me please');
     await expect(bold).toHaveAttribute('aria-pressed', 'true');
 
-    // Turn-into converts the enclosing block.
-    await bubble.locator('.bubble-turn-into').selectOption('h2');
+    // Turn-into converts the enclosing block. Click it first: `selectOption`
+    // sets the value directly, so only a real click proves the menu's
+    // mousedown handler still lets the control open.
+    const turnInto = bubble.locator('.bubble-turn-into');
+    await turnInto.click();
+    await expect(turnInto).toBeFocused();
+    await turnInto.selectOption('h2');
     await expect(editor(page).locator('h2')).toContainText('format me please');
   });
 

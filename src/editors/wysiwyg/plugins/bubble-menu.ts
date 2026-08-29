@@ -42,8 +42,13 @@ class BubbleMenuView {
     content.className = 'milkdown-bubble-menu';
     content.setAttribute('role', 'toolbar');
     content.setAttribute('aria-label', 'Selection formatting');
-    // Keep the editor selection alive while interacting with the menu.
-    content.addEventListener('mousedown', (e) => e.preventDefault());
+    // Keep the editor selection alive while interacting with the menu — but
+    // not over a native control, whose default mousedown action *is* the
+    // interaction: cancelling it stops a <select> from opening at all.
+    content.addEventListener('mousedown', (e) => {
+      if ((e.target as HTMLElement).closest('select, input, textarea')) return;
+      e.preventDefault();
+    });
     this.#content = content;
 
     const run = <T>(key: CmdKey<T>, payload?: T) => {

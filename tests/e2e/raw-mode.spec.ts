@@ -132,4 +132,80 @@ test.describe('raw mode + preview (FR-3, FR-4)', () => {
     await expect(page.locator('.cm-content')).toContainText('*  weird   spacing');
     await expect(page.locator('.cm-content')).toContainText('1)  paren list');
   });
+
+  test('hovering a preview code block reveals a Copy button, without reflow', async ({
+    page,
+    context,
+    browserName,
+  }) => {
+    // Chromium will not write to the clipboard without the grant; Firefox
+    // writes on a user gesture and rejects the grant call itself. Reading back
+    // is Chromium-only either way, as in the export spec.
+    const chromium = browserName === 'chromium';
+    if (chromium) await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await openRawWithDoc(
+      page,
+      '# Title\n\nIntro.\n\n```ts\nconst a = 1;\nconst b = 2;\n```\n\nBetween.\n\n```\nplain block\n```\n\nTail.',
+    );
+
+    const doc = page.getByTestId('preview-doc');
+    // Waiting on the last block means the debounced render has committed, so
+    // the article DOM has stopped being replaced under the assertions below.
+    await expect(doc).toContainText('Tail.');
+    await expect(doc.locator('pre')).toHaveCount(2);
+
+    const blocks = doc.locator('> *');
+    const geometry = () =>
+      blocks.evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect();
+          return `${r.x},${r.y},${r.width},${r.height}`;
+        }),
+      );
+
+    const button = page.getByTestId('preview-copy-code');
+    await expect(button).toHaveCount(0);
+
+    const before = await geometry();
+    await doc.locator('pre').first().hover();
+    await expect(button).toHaveText('Copy');
+
+    // The button is painted over the block, never laid out inside it: revealing
+    // it must not nudge a single block.
+    expect(await geometry()).toEqual(before);
+
+    // Inset from the block's top-right corner.
+    const inset = await page.evaluate(() => {
+      const pre = document
+        .querySelector('[data-testid="preview-doc"] pre')!
+        .getBoundingClientRect();
+      const btn = document
+        .querySelector('[data-testid="preview-copy-code"]')!
+        .getBoundingClientRect();
+      return { top: Math.round(btn.top - pre.top), right: Math.round(pre.right - btn.right) };
+    });
+    expect(inset).toEqual({ top: 8, right: 8 });
+
+    // Copies that block's code, with no trailing blank line.
+    await button.click();
+    await expect(button).toHaveText('Copied');
+    if (chromium) {
+      const copied = await page.evaluate(() => navigator.clipboard.readText());
+      expect(copied.replace(/\r\n/g, '\n')).toBe('const a = 1;\nconst b = 2;');
+    }
+
+    // The next block gets its own content, and the label resets with it.
+    await doc.locator('pre').nth(1).hover();
+    await expect(button).toHaveText('Copy');
+    await button.click();
+    await expect(button).toHaveText('Copied');
+    if (chromium) {
+      const copied = await page.evaluate(() => navigator.clipboard.readText());
+      expect(copied.replace(/\r\n/g, '\n')).toBe('plain block');
+    }
+
+    // And it belongs to the hovered block alone.
+    await doc.locator('p').last().hover();
+    await expect(button).toHaveCount(0);
+  });
 });

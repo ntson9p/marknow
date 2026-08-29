@@ -1,0 +1,5 @@
+{
+  "gittree.commit.checks.analyze": false,
+  "gittree.commit.checks.todo": false,
+  "gittree.commit.checks.deferAdvanced": false
+}

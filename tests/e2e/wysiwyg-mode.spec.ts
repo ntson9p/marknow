@@ -378,6 +378,22 @@ test.describe('WYSIWYG mode (FR-5)', () => {
     await expect(codeBlock.locator('.cm-content')).toContainText('const n: number = 42;');
   });
 
+  test('code block tools buttons look and feel clickable (FR-5.1)', async ({ page }) => {
+    await newWysiwygDoc(page);
+    await page.keyboard.type('``` ');
+
+    // The vendored component ships no CSS of its own, so a tools-bar button
+    // missing from wysiwyg.css still copies but never reacts to the pointer.
+    const copy = editor(page).locator('.milkdown-code-block .copy-button');
+    await expect(copy).toBeVisible();
+    await expect(copy).toHaveCSS('cursor', 'pointer');
+
+    const background = () => copy.evaluate((el) => getComputedStyle(el).backgroundColor);
+    const atRest = await background();
+    await copy.hover();
+    await expect.poll(background).not.toBe(atRest);
+  });
+
   test('a nontrivial README renders with zero syntax leakage (M3 exit)', async ({ page }) => {
     await stubFsa(page);
     await seedFakeFile(page, 'sample.md', README);

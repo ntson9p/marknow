@@ -441,7 +441,18 @@
   font-family: var(--font-sans, ui-sans-serif, sans-serif);
 }
 
-.wysiwyg-root .milkdown-code-block .language-button {
+.wysiwyg-root .milkdown-code-block .tools-button-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Every button in the tools bar shares one look. The component ships no CSS of
+ * its own, so a class missing from this list renders as bare text that never
+ * responds to hover, press or focus — the copy button did exactly that. */
+.wysiwyg-root .milkdown-code-block .language-button,
+.wysiwyg-root .milkdown-code-block .copy-button,
+.wysiwyg-root .milkdown-code-block .preview-toggle-button {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -449,10 +460,22 @@
   padding: 0.15rem 0.5rem;
   border-radius: 0.375rem;
   color: var(--muted-foreground);
+  cursor: pointer;
 }
 
-.wysiwyg-root .milkdown-code-block .language-button:hover {
+.wysiwyg-root .milkdown-code-block .language-button:hover,
+.wysiwyg-root .milkdown-code-block .copy-button:hover,
+.wysiwyg-root .milkdown-code-block .preview-toggle-button:hover {
   background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* Pressed reads one step past hover, mixed toward the accent's own foreground,
+ * so it deepens on the light theme and lifts on the dark one. */
+.wysiwyg-root .milkdown-code-block .language-button:active,
+.wysiwyg-root .milkdown-code-block .copy-button:active,
+.wysiwyg-root .milkdown-code-block .preview-toggle-button:active {
+  background: color-mix(in oklab, var(--accent) 85%, var(--accent-foreground));
   color: var(--accent-foreground);
 }
 
@@ -1147,7 +1170,10 @@ body > div[data-show] .link-preview,
 .milkdown-bubble-menu .bubble-btn:focus-visible,
 .milkdown-bubble-menu .bubble-turn-into:focus-visible,
 .milkdown-slash-menu .slash-item:focus-visible,
-.milkdown-block-handle .block-handle-op:focus-visible {
+.milkdown-block-handle .block-handle-op:focus-visible,
+.wysiwyg-root .milkdown-code-block .language-button:focus-visible,
+.wysiwyg-root .milkdown-code-block .copy-button:focus-visible,
+.wysiwyg-root .milkdown-code-block .preview-toggle-button:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 1px;
 }

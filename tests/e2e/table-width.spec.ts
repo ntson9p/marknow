@@ -55,7 +55,7 @@ async function rowWidth(page: Page, nth: number) {
 test.describe('table width (FR-4.4)', () => {
   test('a WYSIWYG table fills the page and follows the page measure', async ({ page }) => {
     await open(page, 'wysiwyg', 120);
-    await expect(page.locator('.ProseMirror table.children').first()).toBeVisible({
+    await expect(page.locator('.ProseMirror table.mk-table-grid').first()).toBeVisible({
       timeout: 30000,
     });
 
@@ -103,73 +103,87 @@ test.describe('table width (FR-4.4)', () => {
     expect(geometry.wideWrapperWidth).toBeLessThanOrEqual(geometry.docWidth);
     expect(geometry.docScrollsHorizontally).toBe(false);
   });
-
-  test('resizing after hovering a table leaves no phantom scrollbar', async ({ page }) => {
+  test('the chrome never makes a table that fits scroll', async ({ page }) => {
     await open(page, 'wysiwyg', 140);
-    const table = page.locator('.ProseMirror table.children').first();
-    await expect(table).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('.ProseMirror table.mk-table-grid').first()).toBeVisible({
+      timeout: 30000,
+    });
 
-    // Arm both insertion-line handles: they cache absolute geometry measured
-    // against the *current* table width, and only recompute it on a hover.
-    const cell = (await page.locator('.ProseMirror td').first().boundingBox())!;
-    await page.mouse.move(cell.x + cell.width / 2, cell.y + cell.height - 2); // row boundary
-    await page.waitForTimeout(150);
-    await page.mouse.move(cell.x + cell.width - 2, cell.y + cell.height / 2); // column boundary
-    await page.waitForTimeout(150);
-    // Leave the table so the handles hide (but keep their inline geometry).
-    await page.mouse.move(20, 20);
-    await page.waitForTimeout(300);
+    // The reported bug, in the position that triggered it: an insert
+    // affordance on the *last* column's right edge. The kit drew it inside the
+    // table's scroll container, so ~14px of button landed past the content
+    // edge and a table that fitted grew a horizontal scrollbar.
+    const first = page.locator('.mk-table').first();
+    await first.locator('th').last().hover();
+    const addColumn = first.locator('.mk-table-pill-col .mk-pill-add');
+    await expect(addColumn).toBeVisible();
+    await addColumn.hover();
+    await expect(first.locator('.mk-table-indicator')).toBeVisible();
 
-    // Narrow the page well below the width the handles were measured at.
+    // Then resize well below the width the chrome was measured at — the case
+    // that used to leave stale geometry overflowing behind hidden handles.
     await page.getByTestId('page-measure-right').focus();
     for (let i = 0; i < 12; i += 1) await page.keyboard.press('ArrowLeft');
     await page.waitForTimeout(150);
 
-    const overflow = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>('.table-wrapper')].map((w) => ({
-        horizontal: w.scrollWidth - w.clientWidth,
-        vertical: w.scrollHeight - w.clientHeight,
-      })),
-    );
-    // Hidden chrome must not make the table scrollable.
-    for (const o of overflow) {
-      expect(o.horizontal).toBe(0);
-      expect(o.vertical).toBe(0);
-    }
+    const overflow = await page.evaluate(() => {
+      // Table 2 in the fixture is deliberately over-wide and *should* scroll.
+      const scroller = document.querySelector<HTMLElement>('.mk-table-scroll')!;
+      return {
+        horizontal: scroller.scrollWidth - scroller.clientWidth,
+        vertical: scroller.scrollHeight - scroller.clientHeight,
+      };
+    });
+    expect(overflow.horizontal).toBe(0);
+    expect(overflow.vertical).toBe(0);
   });
 
-  test('the insertion line still lands on the boundary it marks', async ({ page }) => {
+  test('the insertion preview marks the boundary the + will insert at', async ({ page }) => {
     await open(page, 'wysiwyg', 100);
-    await expect(page.locator('.ProseMirror table.children').first()).toBeVisible({
-      timeout: 30000,
-    });
+    const first = page.locator('.mk-table').first();
+    await expect(first.locator('table.mk-table-grid')).toBeVisible({ timeout: 30000 });
 
-    // Guards the fix's shape: hiding the handles with `display: none` would
-    // also stop the overflow, but it detaches offsetParent and floating-ui
-    // then places the affordance hundreds of pixels away.
-    const row = (await page.locator('.ProseMirror tbody tr').nth(1).boundingBox())!;
-    await page.mouse.move(row.x + row.width / 2, row.y + 2);
-    await page.waitForTimeout(250);
+    // Hovering a first-column cell raises that row's pill; its `+` means
+    // "insert below", so the preview belongs on the row's bottom edge.
+    const row = first.locator('tbody tr').nth(1);
+    await row.locator('td').first().hover();
+    const addRow = first.locator('.mk-table-pill-row .mk-pill-add');
+    await expect(addRow).toBeVisible();
+    await addRow.hover();
 
-    // The hovered row belongs to the first table; scope to its handle (each
-    // table block renders its own).
-    const firstTable = page.locator('.milkdown-table-block').first();
-    const placement = await page.evaluate((rowTop) => {
-      const handle = document
-        .querySelector('.milkdown-table-block')!
-        .querySelector('[data-role="x-line-drag-handle"]') as HTMLElement;
+    const placement = await page.evaluate(() => {
+      const table = document.querySelector('.mk-table')!;
+      const indicator = table.querySelector<HTMLElement>('.mk-table-indicator')!;
+      const rows = table.querySelectorAll('tbody tr');
       return {
-        shown: handle.dataset.show,
-        offBy: Math.round(handle.getBoundingClientRect().top - rowTop),
+        offBy: Math.round(
+          indicator.getBoundingClientRect().top - rows[1]!.getBoundingClientRect().bottom,
+        ),
       };
-    }, row.y);
-    expect(placement.shown).toBe('true');
+    });
     expect(Math.abs(placement.offBy)).toBeLessThanOrEqual(2);
 
     // …and the affordance still works.
-    const before = await firstTable.locator('table.children tr').count();
-    await firstTable.locator('[data-role="x-line-drag-handle"] .add-button').click();
-    await expect(firstTable.locator('table.children tr')).toHaveCount(before + 1);
+    const before = await first.locator('tbody tr').count();
+    await addRow.click();
+    await expect(first.locator('tbody tr')).toHaveCount(before + 1);
+  });
+
+  test('right-click in a cell opens the table menu', async ({ page }) => {
+    await open(page, 'wysiwyg', 100);
+    const first = page.locator('.mk-table').first();
+    await expect(first.locator('table.mk-table-grid')).toBeVisible({ timeout: 30000 });
+
+    // The pills follow the header row and the first column; every other cell
+    // reaches the same operations from where the pointer already is.
+    await first.locator('tbody tr').nth(1).locator('td').nth(1).click({ button: 'right' });
+    const menu = page.locator('.mk-table-menu');
+    await expect(menu).toBeVisible();
+
+    const before = await first.locator('tbody tr').count();
+    await menu.getByRole('menuitem', { name: 'Insert 1 row above' }).click();
+    await expect(menu).toBeHidden();
+    await expect(first.locator('tbody tr')).toHaveCount(before + 1);
   });
 
   test('scroll-sync anchors survive the wrapper', async ({ page }) => {

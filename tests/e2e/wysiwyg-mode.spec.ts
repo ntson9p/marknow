@@ -136,52 +136,61 @@ test.describe('WYSIWYG mode (FR-5)', () => {
   test('table insert renders an editable table (FR-5.2, FR-5.7)', async ({ page }) => {
     await newWysiwygDoc(page);
     await page.getByRole('button', { name: 'Insert table' }).click();
-    // The table-block component renders the content into `table.children`.
-    await expect(editor(page).locator('table.children')).toBeVisible();
-    expect(await editor(page).locator('table.children tr').count()).toBe(3);
+    // The NodeView renders the rows into `table.mk-table-grid > tbody`.
+    await expect(editor(page).locator('table.mk-table-grid')).toBeVisible();
+    expect(await editor(page).locator('table.mk-table-grid tr').count()).toBe(3);
   });
 
-  test('table handles stay out of the document until hovered (FR-5.7)', async ({ page }) => {
+  test('table pills stay out of the document until hovered (FR-5.7)', async ({ page }) => {
     await stubFsa(page);
     await seedFakeFile(page, 'table.md', TABLE_DOC);
     await page.goto('/');
     await page.getByTestId('welcome-open').click();
-    await expect(editor(page).locator('table.children')).toBeVisible({ timeout: 15000 });
+    await expect(editor(page).locator('table.mk-table-grid')).toBeVisible({ timeout: 15000 });
 
-    // The drag handles are siblings of the table wrapper: unpositioned, they
-    // land in the text flow above the table and render their icons as loose
-    // characters ("=", "left", "center", "right", "-").
+    // The chrome is an absolutely-positioned overlay: unpositioned it would
+    // land in the text flow and push the grid down the frame.
     const offset = await page.evaluate(() => {
-      const block = document.querySelector('.milkdown-table-block') as HTMLElement;
-      const wrapper = block.querySelector('.table-wrapper') as HTMLElement;
-      return wrapper.getBoundingClientRect().top - block.getBoundingClientRect().top;
+      const frame = document.querySelector('.mk-table') as HTMLElement;
+      const scroll = frame.querySelector('.mk-table-scroll') as HTMLElement;
+      return scroll.getBoundingClientRect().top - frame.getBoundingClientRect().top;
     });
     expect(offset).toBeLessThan(4);
 
-    for (const role of ['col-drag-handle', 'row-drag-handle', 'x-line-drag-handle']) {
-      await expect(page.locator(`[data-role="${role}"]`)).toBeHidden();
-    }
+    const colPill = page.locator('.mk-table-pill-col');
+    const rowPill = page.locator('.mk-table-pill-row');
+    await expect(colPill).toBeHidden();
+    await expect(rowPill).toBeHidden();
 
-    // Hovering a cell reveals the column/row grips.
-    await editor(page).locator('td').first().hover();
-    await expect(page.locator('[data-role="col-drag-handle"]')).toBeVisible();
-    await expect(page.locator('[data-role="row-drag-handle"]')).toBeVisible();
+    // Activation follows the header row and the first column. A header cell
+    // raises its column's pill…
+    await editor(page).locator('th').first().hover();
+    await expect(colPill).toBeVisible();
+    // …a first-column cell raises its row's pill…
+    await editor(page).locator('td', { hasText: 'frame' }).hover();
+    await expect(rowPill).toBeVisible();
+    await expect(colPill).toBeHidden();
+    // …and a cell in neither raises nothing: those reach the same operations
+    // by right-click instead, so the chrome stays quiet mid-table.
+    await editor(page).locator('td', { hasText: 'A settings document' }).hover();
+    await expect(rowPill).toBeHidden();
+    await expect(colPill).toBeHidden();
   });
 
-  test('table column alignment via the handle group (FR-5.7)', async ({ page }) => {
+  test('table column alignment via the column menu (FR-5.7)', async ({ page }) => {
     await stubFsa(page);
     await seedFakeFile(page, 'table.md', TABLE_DOC);
     await page.goto('/');
     await page.getByTestId('welcome-open').click();
-    await expect(editor(page).locator('table.children')).toBeVisible({ timeout: 15000 });
+    await expect(editor(page).locator('table.mk-table-grid')).toBeVisible({ timeout: 15000 });
 
-    // Column grip → button group → centre alignment.
-    await editor(page).locator('td').first().hover();
-    const colHandle = page.locator('[data-role="col-drag-handle"]');
-    await colHandle.click();
-    const align = colHandle.getByRole('button', { name: 'Align column center' });
-    await expect(align).toBeVisible();
-    await align.click();
+    // Alignment is the one column-level format markdown has, so it sits one
+    // click deep in the column menu rather than behind a select-then-act.
+    await editor(page).locator('th').first().hover();
+    await page.locator('.mk-table-pill-col button[aria-label="Column options"]').click();
+    const menu = page.locator('.mk-table-menu');
+    await expect(menu).toBeVisible();
+    await menu.getByRole('menuitemradio', { name: 'Align center' }).click();
     await expect(editor(page).locator('th').first()).toHaveAttribute('style', /center/);
 
     await page.waitForTimeout(600); // push debounce
@@ -191,25 +200,73 @@ test.describe('WYSIWYG mode (FR-5)', () => {
     expect((await getFakeDisk(page))['table.md']).toMatch(/\|\s*:-+:\s*\|/);
   });
 
-  test('table row deletion via the handle group (FR-5.7)', async ({ page }) => {
+  test('table row deletion via the row menu (FR-5.7)', async ({ page }) => {
     await stubFsa(page);
     await seedFakeFile(page, 'table.md', TABLE_DOC);
     await page.goto('/');
     await page.getByTestId('welcome-open').click();
-    await expect(editor(page).locator('table.children')).toBeVisible({ timeout: 15000 });
+    await expect(editor(page).locator('table.mk-table-grid')).toBeVisible({ timeout: 15000 });
 
     await editor(page).locator('td', { hasText: 'frame' }).hover();
-    const rowHandle = page.locator('[data-role="row-drag-handle"]');
-    await rowHandle.click();
-    const remove = rowHandle.getByRole('button', { name: 'Delete row' });
-    await expect(remove).toBeVisible();
-    await remove.click();
-    await expect(editor(page).locator('table.children')).not.toContainText('frame');
+    await page.locator('.mk-table-pill-row button[aria-label="Row options"]').click();
+    const menu = page.locator('.mk-table-menu');
+    await expect(menu).toBeVisible();
+    await menu.getByRole('menuitem', { name: 'Delete row' }).click();
+    await expect(editor(page).locator('table.mk-table-grid')).not.toContainText('frame');
 
     await page.waitForTimeout(600); // push debounce
     await page.keyboard.press('ControlOrMeta+s');
     await expect(page.getByTestId('status-save')).toContainText('Saved');
     expect((await getFakeDisk(page))['table.md']).not.toContain('frame');
+  });
+
+  test('the insert + names its direction and Alt flips it (FR-5.7)', async ({ page }) => {
+    await stubFsa(page);
+    await seedFakeFile(page, 'table.md', TABLE_DOC);
+    await page.goto('/');
+    await page.getByTestId('welcome-open').click();
+    await expect(editor(page).locator('table.mk-table-grid')).toBeVisible({ timeout: 15000 });
+
+    // A bare `+` is ambiguous about which side it inserts on, so it says so —
+    // and Alt reaches the side a one-directional button cannot (there is no
+    // other way to put a column left of the first one).
+    await editor(page).locator('th').first().hover();
+    await page.locator('.mk-table-pill-col button[aria-label="Insert column"]').hover();
+    const tip = page.locator('.mk-table-tip');
+    await expect(tip).toContainText('Insert 1 column right');
+
+    await page.keyboard.down('Alt');
+    await expect(tip).toContainText('Insert 1 column left');
+    await page.locator('.mk-table-pill-col button[aria-label="Insert column"]').click();
+    await page.keyboard.up('Alt');
+
+    // The new column landed before "Term", not after it.
+    await expect(editor(page).locator('th')).toHaveCount(3);
+    await expect(editor(page).locator('th').nth(1)).toHaveText('Term');
+  });
+
+  test('dragging the row grip reorders rows (FR-5.7)', async ({ page }) => {
+    await stubFsa(page);
+    await seedFakeFile(page, 'table.md', TABLE_DOC);
+    await page.goto('/');
+    await page.getByTestId('welcome-open').click();
+    await expect(editor(page).locator('table.mk-table-grid')).toBeVisible({ timeout: 15000 });
+
+    const firstColumn = () => editor(page).locator('tbody tr td:first-child').allTextContents();
+    expect(await firstColumn()).toEqual(['slot', 'frame', 'parent']);
+
+    await editor(page).locator('td', { hasText: 'frame' }).hover();
+    const grip = page.locator('.mk-table-pill-row button[aria-label="Select or drag row"]');
+    await expect(grip).toBeVisible();
+    const from = (await grip.boundingBox())!;
+    const onto = (await editor(page).locator('td', { hasText: 'parent' }).boundingBox())!;
+
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(onto.x + onto.width / 2, onto.y + onto.height / 2, { steps: 10 });
+    await page.mouse.up();
+
+    await expect.poll(firstColumn).toEqual(['slot', 'parent', 'frame']);
   });
 
   test('math input rule renders KaTeX; click opens the source editor (FR-5.8)', async ({
@@ -404,7 +461,7 @@ test.describe('WYSIWYG mode (FR-5)', () => {
     const doc = editor(page);
     await expect(doc.locator('h1')).toHaveText('MarkYou Sample');
     await expect(doc.locator('strong').first()).toHaveText('bold');
-    await expect(doc.locator('table.children')).toBeVisible();
+    await expect(doc.locator('table.mk-table-grid')).toBeVisible();
     await expect(doc.locator('.callout-warning')).toContainText('Callouts render as styled boxes.');
     await expect(doc.locator('[data-type="math-inline"] .katex')).toBeVisible();
     await expect(doc.locator('[data-type="math-block"]')).toBeVisible();

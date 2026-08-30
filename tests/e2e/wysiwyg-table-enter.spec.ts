@@ -1,14 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * Enter inside a table (FR-5.7). Live-typing behaviour, which is why the
- * seeded-markdown specs never covered it.
+ * Enter and Tab inside a table (FR-5.7). Live-typing behaviour, which is why
+ * the seeded-markdown specs never covered it.
  */
 
 const editor = (page: Page) => page.locator('.ProseMirror');
-// `table.children` is the real grid — the table block also keeps an empty
-// <table> in its .drag-preview, which comes first in document order.
-const grid = (page: Page) => editor(page).locator('table.children');
+// `.mk-table-grid` is the NodeView's grid; its tbody holds the rows.
+const grid = (page: Page) => editor(page).locator('table.mk-table-grid');
 const cells = (page: Page) => grid(page).locator('th, td');
 
 async function docWithTable(page: Page) {
@@ -90,5 +89,21 @@ test.describe('Table Enter navigation (FR-5.7)', () => {
 
     await page.keyboard.press('Tab');
     await expect.poll(() => caretCell(page)).toBe('r0c1');
+  });
+
+  test('Tab in the last cell appends a row and lands in it', async ({ page }) => {
+    await docWithTable(page);
+    // The preset binds Tab to `goToNextCell(1)`, which returns false here — so
+    // the bottom-right cell used to swallow the keystroke entirely.
+    await cells(page).nth(8).click();
+    await expect.poll(() => caretCell(page)).toBe('r2c2');
+
+    await page.keyboard.press('Tab');
+    await expect(grid(page).locator('tr')).toHaveCount(4);
+    await expect.poll(() => caretCell(page)).toBe('r3c0');
+
+    // The new row is a body row, not a second header row.
+    await page.keyboard.type('grown');
+    await expect(cells(page).nth(9)).toHaveText('grown');
   });
 });

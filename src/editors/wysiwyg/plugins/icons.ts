@@ -78,6 +78,14 @@ export const icons = {
   trash: svg(
     '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
   ),
+  check: svg('<path d="M20 6 9 17l-5-5"/>'),
+  arrowUp: svg('<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>'),
+  arrowDown: svg('<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>'),
+  arrowLeft: svg('<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'),
+  arrowRight: svg('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'),
+  copy: svg(
+    '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  ),
 } as const;
 
 export type IconName = keyof typeof icons;

@@ -91,7 +91,7 @@ test.describe('WYSIWYG UX polish (M4)', () => {
     const slash = page.locator('.milkdown-slash-menu');
     await expect(slash.locator('.slash-item')).toHaveCount(1);
     await slash.locator('.slash-item', { hasText: 'Table' }).click();
-    await expect(editor(page).locator('table.children')).toBeVisible();
+    await expect(editor(page).locator('table.mk-table-grid')).toBeVisible();
 
     // Escape dismisses the menu without inserting.
     await editor(page).click();

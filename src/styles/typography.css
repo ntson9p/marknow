@@ -238,7 +238,7 @@
 }
 
 /* Per-table scroll container: `rehypeTableScroll` adds it in the preview /
- * export pipeline, and the WYSIWYG NodeView brings its own `.table-wrapper`.
+ * export pipeline, and the WYSIWYG NodeView brings its own `.mk-table-scroll`.
  * A table wider than its column scrolls here rather than pushing the whole
  * document sideways. */
 .md-doc .md-table-scroll {

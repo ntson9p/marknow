@@ -3,6 +3,13 @@ import { EditorView } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 
 /**
+ * Shared by `.cm-content` and `.cm-gutters`: CM's base theme puts 1.4 on the
+ * scroller, which the gutter inherits, so a line number's text box would sit a
+ * pixel above the text of the line it labels. One constant keeps them equal.
+ */
+const EDITOR_LINE_HEIGHT = '1.6';
+
+/**
  * CM6 theme driven by the app's CSS variables so light/dark switching is
  * instant (FR-13.1) without editor reconfiguration.
  */
@@ -17,7 +24,7 @@ export const rawEditorTheme = EditorView.theme({
     fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace",
     caretColor: 'var(--foreground)',
     padding: '16px 0',
-    lineHeight: '1.6',
+    lineHeight: EDITOR_LINE_HEIGHT,
   },
   '.cm-line': { padding: '0 16px' },
   '&.cm-focused': { outline: 'none' },
@@ -35,6 +42,7 @@ export const rawEditorTheme = EditorView.theme({
     color: 'var(--muted-foreground)',
     border: 'none',
     paddingLeft: '4px',
+    lineHeight: EDITOR_LINE_HEIGHT,
   },
   '.cm-selectionMatch': {
     backgroundColor: 'color-mix(in oklch, var(--primary) 14%, transparent)',

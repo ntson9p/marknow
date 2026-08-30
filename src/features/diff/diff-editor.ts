@@ -227,6 +227,12 @@ export function createDiffEditor(opts: DiffEditorOptions): DiffEditorHandle {
     });
   }
 
+  // Same as the raw adapter: flush CM's rAF-deferred first measurement now, or
+  // the overlay paints with both gutters one padding-step above their lines
+  // until something else re-syncs them.
+  if (mergeView) mergeView.a.coordsAtPos(0);
+  editable.coordsAtPos(0);
+
   // Store → diff: another editor's (or the metadata panel's) debounced push
   // can land while the overlay is open; apply it as a cursor-preserving diff.
   const unsubscribe = useDocStore.subscribe((s, prev) => {

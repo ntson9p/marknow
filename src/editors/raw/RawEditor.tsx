@@ -51,6 +51,14 @@ export function RawEditor({ onViewReady, autoFocus = true, onSelectionState }: R
       }),
     });
     const view = new EditorView({ state, parent: containerRef.current });
+    // CM6 defers its first layout measurement to a rAF callback, and lays the
+    // gutter out from it: until it runs, row 1 is missing the `.cm-content` top
+    // padding (which CM re-emits as a margin) and every row uses CM's 14px
+    // default estimate instead of the real line height — line numbers sit above
+    // their lines until the next update happens to re-sync the gutter. Reading
+    // geometry flushes that pending measure synchronously, so the editor's
+    // first painted frame is already aligned.
+    view.coordsAtPos(0);
     viewRef.current = view;
     useEditorsStore.getState().setCmView(view);
     onViewReady?.(view);
@@ -83,8 +91,15 @@ export function RawEditor({ onViewReady, autoFocus = true, onSelectionState }: R
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docId]);
 
-  // Live-reconfigure line numbers (FR-3.2 toggle).
+  // Live-reconfigure line numbers (FR-3.2 toggle). A fresh `lineNumbers()` is a
+  // new facet value, so dispatching it tears the gutter down and rebuilds it —
+  // skip that when the setting hasn't actually moved since the view was built
+  // (every mount, and every document switch, otherwise pays for a rebuild of
+  // the gutter it was just created with).
+  const appliedLineNumbers = useRef(settingsLineNumbers);
   useEffect(() => {
+    if (appliedLineNumbers.current === settingsLineNumbers) return;
+    appliedLineNumbers.current = settingsLineNumbers;
     viewRef.current?.dispatch({
       effects: lineNumbersCompartment.reconfigure(settingsLineNumbers ? [lineNumbers()] : []),
     });

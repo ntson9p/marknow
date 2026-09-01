@@ -57,6 +57,7 @@ import { configureSlashMenu, slashMenu } from './plugins/slash-menu';
 import { tableContextMenu } from './plugins/table-context-menu';
 import { tableEnterKeymap } from './plugins/table-keymap';
 import { trailingClickPlugin } from './plugins/trailing-click';
+import { trailingBackspaceKeymap, trailingParagraph } from './plugins/trailing-paragraph';
 import { calloutView } from './views/callout-view';
 import { definitionView } from './views/definition-view';
 import { diagramView } from './views/diagram-view';
@@ -118,6 +119,14 @@ export function normalizeSerialized(doc: ProseNode, markdown: string): string {
   const first = doc.firstChild;
   if (doc.childCount === 1 && first?.type.name === 'paragraph' && first.content.size === 0) {
     return '';
+  }
+  // The paragraph `trailingParagraph` keeps below a table or a code block is
+  // there so the caret has somewhere to go — chrome, not content. It costs one
+  // extra newline, and without dropping it every such document would count as
+  // edited the moment it was opened.
+  const last = doc.lastChild;
+  if (doc.childCount > 1 && last?.type.name === 'paragraph' && last.content.size === 0) {
+    return markdown.replace(/\n+$/, '\n');
   }
   return markdown;
 }
@@ -220,6 +229,8 @@ export function createWysiwygEditor(options: CreateWysiwygEditorOptions): Promis
       // Likewise for Enter in a table, which the gfm preset routes to
       // ExitTable — see the plugin for why that needs intercepting.
       .use(tableEnterKeymap)
+      // Backspace in the kept trailing paragraph — must beat joinBackward.
+      .use(trailingBackspaceKeymap)
       .use(wysiwygRemarkPlugins)
       .use(remarkReferencesPlugin)
       .use(commonmarkPreset)
@@ -262,6 +273,9 @@ export function createWysiwygEditor(options: CreateWysiwygEditorOptions): Promis
       .use(findPlugin)
       .use(listA11yPlugin)
       .use(tableContextMenu)
+      // A caret-sized way out of a document that ends in a table or a code
+      // block (FR-5.6) — see plugins/trailing-paragraph.ts.
+      .use(trailingParagraph)
       .use(trailingClickPlugin)
       .use(listener)
       .use(statePlugin)

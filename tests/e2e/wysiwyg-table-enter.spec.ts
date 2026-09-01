@@ -96,9 +96,11 @@ test.describe('Table Enter, Shift+Enter and Tab (FR-5.7)', () => {
 
     await expect(cells(page).first().locator('br[data-type="table-break"]')).toHaveCount(1);
     await expect(cells(page).first()).toHaveText('line oneline two');
-    // The table keeps its shape and nothing lands after it.
+    // The table keeps its shape, and the only paragraph is the empty one that
+    // `trailingParagraph` keeps below every table-ending document.
     await expect(grid(page).locator('tr')).toHaveCount(3);
-    await expect(editor(page).locator('> p')).toHaveCount(0);
+    await expect(editor(page).locator('> p')).toHaveCount(1);
+    await expect(editor(page).locator('> p')).toHaveText('');
   });
 
   test('Enter writes a <br>, the only line break a cell can hold', async ({ page }) => {
@@ -192,13 +194,14 @@ test.describe('Table Enter, Shift+Enter and Tab (FR-5.7)', () => {
     await page.keyboard.press('Enter');
 
     // The preset routes Enter to ExitTable, which appends a paragraph after
-    // the whole table. Ours wins everywhere in the table, bottom row included.
+    // the whole table. Ours wins everywhere in the table, bottom row included —
+    // so the trailing paragraph count stays at the one kept there all along.
     await expect.poll(() => caretCell(page)).toBe('r2c0');
     await expect(grid(page).locator('tr')).toHaveCount(3);
-    await expect(editor(page).locator('> p')).toHaveCount(0);
+    await expect(editor(page).locator('> p')).toHaveCount(1);
   });
 
-  test('Ctrl+Enter still leaves the table from a middle row', async ({ page }) => {
+  test('Ctrl+Enter leaves the table into the paragraph already kept below it', async ({ page }) => {
     await docWithTable(page);
     await clickCell(page, 3);
     await expect.poll(() => caretCell(page)).toBe('r1c0');
@@ -206,7 +209,10 @@ test.describe('Table Enter, Shift+Enter and Tab (FR-5.7)', () => {
 
     await expect.poll(() => caretCell(page)).toBe('outside');
     await page.keyboard.type('after the table');
-    await expect(editor(page).locator('p').last()).toHaveText('after the table');
+    await expect(editor(page).locator('> p')).toHaveText('after the table');
+    // The preset's ExitTable appends unconditionally; landing in the kept
+    // paragraph instead is what stops the gap below the table from doubling.
+    await expect(editor(page).locator('> p')).toHaveCount(1);
     await expect(grid(page).locator('tr')).toHaveCount(3);
   });
 

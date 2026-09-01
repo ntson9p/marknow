@@ -1,7 +1,8 @@
 import { paragraphSchema } from '@milkdown/kit/preset/commonmark';
-import type { Node as ProseNode } from '@milkdown/kit/prose/model';
 import { Plugin, TextSelection } from '@milkdown/kit/prose/state';
 import { $prose } from '@milkdown/kit/utils';
+
+import { needsTrailingParagraph } from './trailing-paragraph';
 
 /**
  * Clicking the empty space below the document should extend it, not jump to
@@ -12,20 +13,12 @@ import { $prose } from '@milkdown/kit/utils';
  * back to position 0 — so the next keystroke lands at the very start of the
  * document. Append a paragraph and put the caret there instead, which is what
  * the click plainly meant.
+ *
+ * `trailingParagraph` now keeps such a document ending in a paragraph, so this
+ * rarely has anything left to catch. It stays as the guard for the moment
+ * before that plugin's first pass, and because the failure it prevents —
+ * silently typing into the top of the document — is a bad one.
  */
-
-/**
- * Blocks that can't take the caret from a click below them: atoms (math
- * blocks, diagrams, rules) and the two whose editing surface belongs to a
- * NodeView rather than to ProseMirror. Prose containers — paragraphs,
- * headings, quotes, callouts, lists — resolve gutter clicks correctly on
- * their own and are deliberately left alone.
- */
-const NODE_VIEW_BLOCKS = new Set(['code_block', 'table']);
-
-function needsTrailingParagraph(last: ProseNode): boolean {
-  return last.isAtom || NODE_VIEW_BLOCKS.has(last.type.name);
-}
 
 export const trailingClickPlugin = $prose(
   (ctx) =>

@@ -123,13 +123,17 @@ test.describe('Code block keyboard escapes (FR-5.1)', () => {
     // Settle the interaction before typing: the handle is positioned
     // asynchronously, so a click that lands mid-reposition inserts nothing and
     // would otherwise surface as a confusing assertion on the typed text.
-    await expect(editor(page).locator('p')).toHaveCount(2);
+    // Three, not two: the intro paragraph, the inserted one, and the empty one
+    // `trailingParagraph` keeps below a document ending in a code block.
+    await expect(editor(page).locator('p')).toHaveCount(3);
     // This is the fix itself — focus used to bounce straight back into
     // CodeMirror, so the text landed in the fence instead.
     await expect.poll(() => activeElement(page)).toContain('ProseMirror');
 
     await page.keyboard.type('AAA');
-    await expect(editor(page).locator('p').last()).toHaveText('AAA');
+    // The inserted paragraph, not the last one — the kept trailing paragraph
+    // now sits after it.
+    await expect(editor(page).locator('> p').nth(1)).toHaveText('AAA');
     await expect(codeText(page)).toHaveText('const x = 1;');
   });
 });

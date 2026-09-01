@@ -84,6 +84,35 @@ const appendRowAtEnd =
   };
 
 /**
+ * Mod-Enter from the last table in a document steps into the paragraph
+ * `trailingParagraph` already keeps there, rather than inserting a second one.
+ *
+ * The preset's `ExitTable` appends unconditionally, which was right when a
+ * table could end a document. Now it leaves two empty paragraphs stacked
+ * below the table — harmless in the file, which normalizes them away, but the
+ * gap visibly doubles under a keystroke that promised to move the caret.
+ *
+ * Falls through everywhere else, so exiting a table with content after it
+ * still inserts, as before.
+ */
+const exitIntoTrailingParagraph: Command = (state, dispatch) => {
+  if (!isInTable(state)) return false;
+
+  const last = state.doc.lastChild;
+  if (!last || last.type.name !== 'paragraph' || last.content.size > 0) return false;
+  // The caret's own top-level block has to be the one directly above it.
+  const { $head } = state.selection;
+  if ($head.index(0) !== state.doc.childCount - 2) return false;
+
+  if (dispatch) {
+    const start = state.doc.content.size - last.nodeSize + 1;
+    const selection = TextSelection.near(state.doc.resolve(start), 1);
+    dispatch(state.tr.setSelection(selection).scrollIntoView());
+  }
+  return true;
+};
+
+/**
  * Registered ahead of the gfm preset so these bindings win the Enter it would
  * otherwise route straight to ExitTable, and the Tab it would drop on the floor.
  */
@@ -91,6 +120,7 @@ export const tableEnterKeymap = $prose((ctx) =>
   keymap({
     Enter: insertCellBreak(ctx),
     'Shift-Enter': insertCellBreak(ctx),
+    'Mod-Enter': exitIntoTrailingParagraph,
     Tab: appendRowAtEnd(ctx),
   }),
 );

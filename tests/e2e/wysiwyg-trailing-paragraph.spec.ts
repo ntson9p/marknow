@@ -117,6 +117,35 @@ test.describe('trailing paragraph below an unexitable block (FR-5.6)', () => {
     await expect(paras(page).last()).toHaveText('last para');
   });
 
+  test('clicking the blank area below the page continues the document', async ({ page }) => {
+    await openFile(page, 'blank.md', TABLE_DOC);
+    await expect(grid(page)).toBeVisible();
+
+    // The bottom of the page card, as far down as anyone would plausibly aim.
+    const card = (await page.getByTestId('wysiwyg-page').boundingBox())!;
+    await page.mouse.click(card.x + card.width / 2, card.y + card.height - 8);
+    await page.keyboard.type('continued');
+
+    // Landing anywhere is not enough: focus survives a click on a plain div, so
+    // the text could simply appear wherever the caret already was.
+    await expect(paras(page)).toHaveText('continued');
+    await expect(grid(page).locator('tr')).toHaveCount(3);
+  });
+
+  test('the blank area works for an ordinary document too', async ({ page }) => {
+    // Nothing about this is table-specific — the dead zone was at the bottom of
+    // every page, whatever the last block happened to be.
+    await openFile(page, 'plainblank.md', ['# Title', '', 'only paragraph', ''].join('\n'));
+    await expect(editor(page).locator('h1')).toBeVisible();
+
+    const card = (await page.getByTestId('wysiwyg-page').boundingBox())!;
+    await page.mouse.click(card.x + card.width / 2, card.y + card.height - 8);
+    await page.keyboard.type('!');
+
+    await expect(paras(page).last()).toHaveText('only paragraph!');
+    await expect(paras(page)).toHaveCount(1);
+  });
+
   test('the gap cursor between two blocks is drawn', async ({ page }) => {
     // Two adjacent tables: a caret clicked into the margin between them has
     // nowhere to sit but a gap cursor, which `plugin-cursor` creates and whose

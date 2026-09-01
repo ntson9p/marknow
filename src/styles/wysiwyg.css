@@ -8,14 +8,36 @@
 
 /* ---------- editor surface ---------- */
 
-/* Offset parent for the absolutely-positioned block handle (FR-5.6). */
+/* Offset parent for the absolutely-positioned block handle (FR-5.6).
+ *
+ * Also a flex column, with `.milkdown` and `.ProseMirror` growing inside it,
+ * so the editing surface fills the page rather than stopping at the last
+ * block. The blank part of a page reads as "the document, continued" and
+ * every editor treats a click there as one: without this the bottom of the
+ * page was dead, and a document ending in a table could only be continued by
+ * finding and hitting the one thin line below it. */
 .wysiwyg-root {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+.wysiwyg-root .milkdown {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
 }
 
 .wysiwyg-root .ProseMirror {
   outline: none;
   min-height: 16rem;
+  flex: 1 1 auto;
+  /* The page's vertical breathing room belongs to the editor, not to the card
+   * around it: padding on the card is dead space that swallows a click meant
+   * for the end of the document. Panes that want a tighter page override the
+   * variable. */
+  padding-block: var(--mk-page-pad-y, 3rem);
   white-space: pre-wrap;
   word-break: break-word;
 }

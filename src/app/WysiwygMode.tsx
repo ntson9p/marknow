@@ -42,7 +42,7 @@ export function WysiwygMode() {
         <div
           ref={pageRef}
           style={{ maxWidth: `min(${measure}ch, calc(100% - 2rem))` }}
-          className="relative mx-auto my-8 min-h-[70%] w-full rounded-lg border border-border/60 bg-background px-10 py-12 shadow-sm"
+          className="relative mx-auto my-8 flex min-h-[70%] w-full flex-col rounded-lg border border-border/60 bg-background px-10 shadow-sm"
           data-testid="wysiwyg-page"
         >
           {/* Resize affordances live in the gutter, clear of the text (§8.2:

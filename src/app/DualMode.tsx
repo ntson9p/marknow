@@ -117,7 +117,7 @@ export function DualMode() {
             <div
               ref={registerRightPane}
               onFocus={() => setActivePane('rich')}
-              className="relative h-full overflow-y-auto border-l bg-background motion-safe:scroll-smooth"
+              className="relative flex h-full flex-col overflow-y-auto border-l bg-background motion-safe:scroll-smooth"
               data-testid="dual-wysiwyg-pane"
             >
               {find.open && editor && (
@@ -130,7 +130,12 @@ export function DualMode() {
                   dual mode the splitter is the width control (FR-2.4), so
                   dragging it has to resize the rich editor. The ~72ch measure
                   belongs to WYSIWYG single mode's centred page (§8.1). */}
-              <div className="w-full px-6 py-6" data-testid="dual-wysiwyg-page">
+              <div
+                className="flex w-full grow flex-col px-6"
+                // The pane's page is tighter than single mode's centred one.
+                style={{ '--mk-page-pad-y': '1.5rem' } as React.CSSProperties}
+                data-testid="dual-wysiwyg-page"
+              >
                 <WysiwygEditor
                   key={docId}
                   onEditorReady={onEditorReady}

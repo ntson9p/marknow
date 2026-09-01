@@ -1,5 +1,5 @@
 import { $remark } from '@milkdown/kit/utils';
-import type { Code, Root } from 'mdast';
+import type { Code, Html, Root } from 'mdast';
 import remarkMath from 'remark-math';
 import { visit } from 'unist-util-visit';
 
@@ -37,9 +37,39 @@ export function remarkDiagrams() {
 
 export const remarkDiagramPlugin = $remark('remarkDiagrams', () => remarkDiagrams);
 
+/** Only these spellings are a line break; anything else stays verbatim HTML. */
+const BR = /^<br\s*\/?>$/i;
+
+/**
+ * `<br>` inside a table cell → `tableBreak` nodes for the schema (FR-5.7).
+ *
+ * Confined to cells on purpose. Everywhere else markdown has a native line
+ * break, so a `<br>` an author typed is HTML they meant, and D13 rule 3 keeps
+ * it verbatim in a chip. Inside a cell there is no native break, which makes
+ * `<br>` the line break rather than a piece of markup about one.
+ *
+ * The re-tag happens here rather than through parser precedence for the reason
+ * the module header gives: matcher conflicts are settled on the mdast type.
+ */
+export function remarkTableBreaks() {
+  return (tree: Root) => {
+    visit(tree, 'tableCell', (cell) => {
+      // Nested, not over `cell.children`: a break can sit inside emphasis.
+      visit(cell, 'html', (node: Html) => {
+        if (BR.test(node.value.trim())) {
+          (node as unknown as { type: string }).type = 'tableBreak';
+        }
+      });
+    });
+  };
+}
+
+export const remarkTableBreakPlugin = $remark('remarkTableBreaks', () => remarkTableBreaks);
+
 export const wysiwygRemarkPlugins = [
   remarkMathPlugin,
   remarkCalloutPlugin,
   remarkHtmlBlockPlugin,
   remarkDiagramPlugin,
+  remarkTableBreakPlugin,
 ].flat();

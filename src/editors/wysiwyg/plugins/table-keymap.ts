@@ -6,43 +6,40 @@ import { TextSelection, type Command } from '@milkdown/kit/prose/state';
 import { isInTable, selectionCell, TableMap } from '@milkdown/kit/prose/tables';
 import { $prose } from '@milkdown/kit/utils';
 
+import { tableBreakSchema } from '../nodes/table-break';
+
 /**
- * Enter inside a table moves to the cell below (FR-5.7).
+ * Enter inside a table starts a new line in the cell (FR-5.7), as Docs, Word
+ * and Notion all do.
  *
- * The gfm preset binds plain Enter to the same `ExitTable` command as
- * Mod-Enter, and `ExitTable` appends a paragraph after the *whole* table. So
- * Enter in the first cell of a 3x3 skipped two untouched rows and landed below
- * everything, with nothing on screen to say a jump had happened.
+ * This binding used to move to the cell below, on the premise that a markdown
+ * cell cannot hold a line break. Half true: a pipe-table row is one line of
+ * source, so there is no *native* break — but `<br>` is legal, universal, and
+ * what every markdown table with a wrapped cell in the wild contains. See
+ * `nodes/table-break.ts` for why it is its own node.
  *
- * A markdown cell can't hold a line break, so Enter has to mean something other
- * than "split this block". The spreadsheet meaning — down one row, same column
- * — is the one Tab already implies by moving right.
+ * Nothing is lost by giving Enter back to the text. Moving between cells is
+ * already Tab (next), Shift-Tab (previous) and the arrow keys (any direction),
+ * all of which worked before this change; leaving the table entirely is still
+ * Mod-Enter, which the gfm preset binds to `ExitTable`.
+ *
+ * Shift-Enter maps here too. It is the other break gesture people arrive with,
+ * and in a cell it did nothing at all: some handler upstream claimed the
+ * keystroke and inserted no break, so it read as a dead key. Binding it ahead
+ * of the presets settles that.
  */
-const moveToCellBelow: Command = (state, dispatch) => {
-  if (!isInTable(state)) return false;
-  // A range selection means Enter is about replacing content, not navigating.
-  if (!state.selection.empty) return false;
+const insertCellBreak =
+  (ctx: Ctx): Command =>
+  (state, dispatch) => {
+    if (!isInTable(state)) return false;
+    // A cell selection means Enter is aimed at the cells, not at their text —
+    // leave it to the preset rather than typing into an ambiguous target.
+    if (!(state.selection instanceof TextSelection)) return false;
+    if (!dispatch) return true;
 
-  const $cell = selectionCell(state);
-  // `selectionCell` resolves to the position *before* the cell, i.e. inside the
-  // row — so the table is one level up from there.
-  const table = $cell.node(-1);
-  const tableStart = $cell.start(-1);
-  const map = TableMap.get(table);
-  const rect = map.findCell($cell.pos - tableStart);
-
-  // Bottom row: hand Enter back to the preset, whose ExitTable still leaves the
-  // table exactly as it did before. Keeping that fall-through is what makes
-  // this change additive rather than a replacement.
-  if (rect.bottom >= map.height) return false;
-
-  if (dispatch) {
-    const below = tableStart + map.map[rect.bottom * map.width + rect.left]!;
-    const selection = TextSelection.near(state.doc.resolve(below), 1);
-    dispatch(state.tr.setSelection(selection).scrollIntoView());
-  }
-  return true;
-};
+    dispatch(state.tr.replaceSelectionWith(tableBreakSchema.type(ctx).create()).scrollIntoView());
+    return true;
+  };
 
 /**
  * Tab in the last cell grows the table (FR-5.7).
@@ -91,5 +88,9 @@ const appendRowAtEnd =
  * otherwise route straight to ExitTable, and the Tab it would drop on the floor.
  */
 export const tableEnterKeymap = $prose((ctx) =>
-  keymap({ Enter: moveToCellBelow, Tab: appendRowAtEnd(ctx) }),
+  keymap({
+    Enter: insertCellBreak(ctx),
+    'Shift-Enter': insertCellBreak(ctx),
+    Tab: appendRowAtEnd(ctx),
+  }),
 );

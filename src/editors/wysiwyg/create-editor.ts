@@ -40,6 +40,7 @@ import { definitionNodes } from './nodes/definition';
 import { diagramNodes } from './nodes/diagram';
 import { htmlBlockNodes } from './nodes/html-block';
 import { mathNodes } from './nodes/math';
+import { tableBreakNodes } from './nodes/table-break';
 import { listSpreadFixes } from './plugins/list-spread-fix';
 import { remarkReferencesPlugin } from './plugins/references';
 import { wysiwygRemarkPlugins } from './plugins/remark-plugins';
@@ -228,6 +229,8 @@ export function createWysiwygEditor(options: CreateWysiwygEditorOptions): Promis
       .use(diagramNodes)
       .use(htmlBlockNodes)
       .use(mathNodes)
+      // A cell's only possible line break (FR-5.7) — see nodes/table-break.ts.
+      .use(tableBreakNodes)
       .use(definitionNodes)
       .use(wysiwygCommands.flat())
       .use(wysiwygInputRules)

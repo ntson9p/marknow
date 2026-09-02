@@ -24,7 +24,7 @@ import { icons } from './icons';
  * block-type control. Built on the tooltip plugin (flip/shift middleware ship
  * in the provider), so it is the primary formatting surface on touch (FR-5.4).
  */
-export const bubbleTooltip = tooltipFactory('markyou-bubble');
+export const bubbleTooltip = tooltipFactory('marknow-bubble');
 
 interface MarkButton {
   el: HTMLButtonElement;

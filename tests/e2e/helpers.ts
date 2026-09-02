@@ -11,10 +11,10 @@ export async function pinMode(page: Page, mode: 'raw' | 'wysiwyg' | 'dual') {
     // (and their persistence) still win afterwards.
     if (window.localStorage.getItem('__pinModeApplied')) return;
     window.localStorage.setItem('__pinModeApplied', '1');
-    const raw = window.localStorage.getItem('markyou.ui');
+    const raw = window.localStorage.getItem('marknow.ui');
     const persisted = raw ? (JSON.parse(raw) as { state: Record<string, unknown> }) : { state: {} };
     persisted.state = { ...persisted.state, mode: m };
-    window.localStorage.setItem('markyou.ui', JSON.stringify({ version: 0, ...persisted }));
+    window.localStorage.setItem('marknow.ui', JSON.stringify({ version: 0, ...persisted }));
   }, mode);
 }
 
@@ -62,7 +62,7 @@ export async function stubFsa(page: Page) {
 /** Pin the theme before boot so contrast scans are deterministic. */
 export async function pinTheme(page: Page, theme: 'light' | 'dark') {
   await page.addInitScript((t) => {
-    window.localStorage.setItem('markyou.theme', t);
+    window.localStorage.setItem('marknow.theme', t);
   }, theme);
 }
 

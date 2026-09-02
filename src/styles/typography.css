@@ -1,5 +1,5 @@
 /*
- * MarkYou document typography — the styling reference (FR-4.4).
+ * MarkNow document typography — the styling reference (FR-4.4).
  * Shared by preview, the WYSIWYG editor, and HTML/PDF export, so a document
  * can never look different between modes. Plain CSS (no framework classes) so
  * it can be inlined into standalone exports.

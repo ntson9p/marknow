@@ -30,7 +30,7 @@ import { icons } from './icons';
  * navigation lives in the same plugin's `handleKeyDown` so it is correctly
  * scoped to the editor view.
  */
-export const slashMenu = slashFactory('markyou-slash');
+export const slashMenu = slashFactory('marknow-slash');
 
 /** Non-whitespace placeholder for atom leaves when scanning the block text. */
 const ATOM_LEAF = String.fromCharCode(0xfffc);

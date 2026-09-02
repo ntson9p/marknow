@@ -1,4 +1,4 @@
-# MarkYou
+# MarkNow
 
 A local-first markdown editor. See the [docs](https://example.com/docs).
 

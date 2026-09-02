@@ -35,14 +35,14 @@ export interface SettingRecord {
   value: unknown;
 }
 
-export class MarkYouDB extends Dexie {
+export class MarkNowDB extends Dexie {
   drafts!: EntityTable<DraftRecord, 'docId'>;
   recents!: EntityTable<RecentRecord, 'id'>;
   snapshots!: EntityTable<SnapshotRecord, 'id'>;
   settings!: EntityTable<SettingRecord, 'key'>;
 
   constructor() {
-    super('markyou');
+    super('marknow');
     this.version(1).stores({
       drafts: 'docId, updatedAt',
       recents: 'id, lastOpenedAt',
@@ -52,4 +52,4 @@ export class MarkYouDB extends Dexie {
   }
 }
 
-export const db = new MarkYouDB();
+export const db = new MarkNowDB();

@@ -1,4 +1,4 @@
-# MarkYou WYSIWYG UX findings
+# MarkNow WYSIWYG UX findings
 
 A worklog from a WYSIWYG audit pass, kept because the measurements and the reasoning are
 worth more than the conclusions. **Most of it is already fixed** — the status table below

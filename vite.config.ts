@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'MarkYou',
-        short_name: 'MarkYou',
+        name: 'MarkNow',
+        short_name: 'MarkNow',
         description: 'Local-first WYSIWYG markdown editor — raw, rich, and dual mode.',
         theme_color: '#4f46e5',
         background_color: '#ffffff',

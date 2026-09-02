@@ -32,7 +32,7 @@ export async function requestAssetsFolder(): Promise<boolean> {
   try {
     const dir = await (window as unknown as DirectoryPickerWindow).showDirectoryPicker({
       mode: 'readwrite',
-      id: 'markyou-assets',
+      id: 'marknow-assets',
     });
     useAssetsStore.getState().setDir(dir);
     return true;

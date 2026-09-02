@@ -1,17 +1,17 @@
 {
-  "name": "markyou",
+  "name": "marknow",
   "private": true,
   "version": "1.0.0",
   "description": "Local-first WYSIWYG markdown editor — raw source, rich text, or both side by side, straight from the files on your disk.",
   "license": "MIT",
   "author": "Nguyen Truong Son",
-  "homepage": "https://markyou.web.app/",
+  "homepage": "https://marknow.web.app/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ntson9p/markyou.git"
+    "url": "git+https://github.com/ntson9p/marknow.git"
   },
   "bugs": {
-    "url": "https://github.com/ntson9p/markyou/issues"
+    "url": "https://github.com/ntson9p/marknow/issues"
   },
   "keywords": [
     "markdown",

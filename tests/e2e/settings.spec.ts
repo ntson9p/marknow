@@ -91,7 +91,7 @@ test.describe('settings (FR-13)', () => {
     // No re-render needed: the preference lives on the document root.
     expect(await scrolls(page)).toBe(true);
 
-    const stored = await page.evaluate(() => localStorage.getItem('markyou.settings'));
+    const stored = await page.evaluate(() => localStorage.getItem('marknow.settings'));
     expect(stored).toContain('"diagramScroll":true');
 
     await page.reload();

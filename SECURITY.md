@@ -5,7 +5,7 @@
 Please **do not** open a public issue for a security problem.
 
 Report it privately through GitHub's
-[Report a vulnerability](https://github.com/ntson9p/markyou/security/advisories/new) form,
+[Report a vulnerability](https://github.com/ntson9p/marknow/security/advisories/new) form,
 which opens a private advisory only the maintainers can see.
 
 Include what you would want to receive: what the issue is, how to reproduce it (a document
@@ -18,7 +18,7 @@ disclosing publicly.
 
 ## What is in scope
 
-MarkYou is a fully client-side application. There is no backend, no user account, and no
+MarkNow is a fully client-side application. There is no backend, no user account, and no
 server that stores your documents — so the interesting attack surface is **a malicious
 document, opened by a trusting user**. Things worth reporting:
 
@@ -47,5 +47,5 @@ document, opened by a trusting user**. Things worth reporting:
 
 ## Supported versions
 
-The latest release on [markyou.web.app](https://markyou.web.app/) and the `main` branch are
+The latest release on [marknow.web.app](https://marknow.web.app/) and the `main` branch are
 the supported versions. There are no maintained older branches.

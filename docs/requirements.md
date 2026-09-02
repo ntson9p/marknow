@@ -1,4 +1,4 @@
-# MarkYou — Software Requirements Specification
+# MarkNow — Software Requirements Specification
 
 **Version:** 1.0 · **Date:** 2026-07-24 · **Status:** Approved (decisions locked with product owner)
 
@@ -6,7 +6,7 @@
 
 ## 1. Overview
 
-MarkYou is a **web-based, local-first WYSIWYG markdown editor**. It gives one document three synchronized views:
+MarkNow is a **web-based, local-first WYSIWYG markdown editor**. It gives one document three synchronized views:
 
 1. **Raw mode** — a code editor for the markdown source with a live preview column.
 2. **WYSIWYG mode** — a Google-Docs-like rich editing experience that reads and writes markdown.

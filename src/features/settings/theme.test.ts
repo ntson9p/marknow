@@ -17,18 +17,18 @@ describe('theme controller', () => {
   it('applies and persists dark theme', () => {
     useThemeStore.getState().setTheme('dark');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
-    expect(localStorage.getItem('markyou.theme')).toBe('dark');
+    expect(localStorage.getItem('marknow.theme')).toBe('dark');
   });
 
   it('applies and persists light theme', () => {
     useThemeStore.getState().setTheme('dark');
     useThemeStore.getState().setTheme('light');
     expect(document.documentElement.classList.contains('dark')).toBe(false);
-    expect(localStorage.getItem('markyou.theme')).toBe('light');
+    expect(localStorage.getItem('marknow.theme')).toBe('light');
   });
 
   it('restores the stored theme on init', () => {
-    localStorage.setItem('markyou.theme', 'dark');
+    localStorage.setItem('marknow.theme', 'dark');
     initTheme();
     expect(useThemeStore.getState().theme).toBe('dark');
     expect(document.documentElement.classList.contains('dark')).toBe(true);

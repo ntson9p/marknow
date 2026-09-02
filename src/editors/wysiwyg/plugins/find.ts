@@ -25,7 +25,7 @@ export interface FindState {
 
 const EMPTY: FindState = { query: '', caseSensitive: false, matches: [], active: -1 };
 
-export const findPluginKey = new PluginKey<FindState>('markyou-find');
+export const findPluginKey = new PluginKey<FindState>('marknow-find');
 
 interface FindMeta {
   query?: string;

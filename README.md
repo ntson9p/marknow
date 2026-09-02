@@ -2,22 +2,22 @@
 
 <img src="public/icons/icon-192.png" alt="" width="88" height="88">
 
-# MarkYou
+# MarkNow
 
 **Write markdown the way you like it — raw source, rich text, or both side by side.**
 
 Straight from the `.md` files on your disk. No account, no upload, no lock-in.
 
-[**→ Open the app**](https://markyou.web.app/) · [Guided tour](#a-guided-tour) · [Contributing](#contributing)
+[**→ Open the app**](https://marknow.web.app/) · [Guided tour](#a-guided-tour) · [Contributing](#contributing)
 
-[![CI](https://github.com/ntson9p/markyou/actions/workflows/ci.yml/badge.svg)](https://github.com/ntson9p/markyou/actions/workflows/ci.yml)
+[![CI](https://github.com/ntson9p/marknow/actions/workflows/ci.yml/badge.svg)](https://github.com/ntson9p/marknow/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PWA](https://img.shields.io/badge/PWA-installable-5a45e0.svg)](#install-it-like-an-app)
 [![No trackers](https://img.shields.io/badge/telemetry-none-16a34a.svg)](#privacy-the-short-version)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/hero-dark.png">
-  <img src="docs/screenshots/hero-light.png" alt="MarkYou in dual mode: markdown source on the left, rich-text editing on the right, with a rendered Mermaid flowchart and KaTeX formula" width="100%">
+  <img src="docs/screenshots/hero-light.png" alt="MarkNow in dual mode: markdown source on the left, rich-text editing on the right, with a rendered Mermaid flowchart and KaTeX formula" width="100%">
 </picture>
 
 </div>
@@ -31,7 +31,7 @@ you read syntax instead of prose. Rich editors are pleasant until they quietly r
 your file into their own dialect. Cloud editors are pleasant until your notes live on
 someone else's server.
 
-MarkYou refuses the trade.
+MarkNow refuses the trade.
 
 **Three views, one document.** Raw source, WYSIWYG, or both side by side — switch
 mid-sentence with `Ctrl+Shift+1/2/3`. Not three files, not three copies. One document,
@@ -56,14 +56,14 @@ diagrams, images, frontmatter, outline, find & replace, version snapshots, and H
 export.
 
 > **New to the project?** The fastest way to judge it is to
-> [open the app](https://markyou.web.app/) and drop one of your own `.md` files onto the
+> [open the app](https://marknow.web.app/) and drop one of your own `.md` files onto the
 > window. Nothing is uploaded — you can check the network tab.
 
 ---
 
 ## Try it in 60 seconds
 
-1. Go to **[markyou.web.app](https://markyou.web.app/)**.
+1. Go to **[marknow.web.app](https://marknow.web.app/)**.
 2. Click **New document**, or drag any `.md` file anywhere onto the window.
 3. Write something. Press `Ctrl+S`.
 
@@ -71,7 +71,7 @@ That's it. On Chrome or Edge, step 3 writes straight back to the file you opened
 no sign-up, no onboarding tour, and nothing to configure first.
 
 <div align="center">
-  <img src="docs/screenshots/welcome.png" alt="The MarkYou start screen with New document and Open buttons, a list of what the app can do, and a note that nothing is uploaded" width="90%">
+  <img src="docs/screenshots/welcome.png" alt="The MarkNow start screen with New document and Open buttons, a list of what the app can do, and a note that nothing is uploaded" width="90%">
 </div>
 
 ---
@@ -181,7 +181,7 @@ Single pane, touch formatting through the bubble menu, and the same rendering �
 and math included. The toolbar stays above the virtual keyboard.
 
 <div align="center">
-  <img src="docs/screenshots/mobile.png" alt="MarkYou on a phone screen showing a rendered Mermaid flowchart and a KaTeX formula in a single-column layout" width="300">
+  <img src="docs/screenshots/mobile.png" alt="MarkNow on a phone screen showing a rendered Mermaid flowchart and a KaTeX formula in a single-column layout" width="300">
 </div>
 
 ---
@@ -216,7 +216,7 @@ Baseline **CommonMark**, plus:
 
 ## Install it like an app
 
-MarkYou is a PWA. In Chrome or Edge, click the install icon in the address bar to get it as
+MarkNow is a PWA. In Chrome or Edge, click the install icon in the address bar to get it as
 a standalone window with its own icon, working offline. Everything is precached, including
 the KaTeX fonts and the Mermaid engine.
 
@@ -275,8 +275,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, conventions and what a good PR
 ### Development
 
 ```bash
-git clone https://github.com/ntson9p/markyou.git
-cd markyou
+git clone https://github.com/ntson9p/marknow.git
+cd marknow
 npm ci            # install (versions pinned via package-lock)
 npm run dev       # dev server on http://localhost:5173
 ```
@@ -338,5 +338,5 @@ Use it, fork it, modify it, ship it in a commercial product, sell it. No attribu
 required beyond keeping the license notice in copies of the source. No copyleft, no patent
 traps, no field-of-use restrictions.
 
-MarkYou's dependencies are all permissively licensed too (MIT, ISC, Apache-2.0, BSD), so a
+MarkNow's dependencies are all permissively licensed too (MIT, ISC, Apache-2.0, BSD), so a
 build you distribute carries no copyleft obligations.

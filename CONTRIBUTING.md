@@ -1,4 +1,4 @@
-# Contributing to MarkYou
+# Contributing to MarkNow
 
 Thanks for being here. This project is genuinely open to contributions, and small ones are
 welcome — a bug report with a reproduction is worth as much as a patch.
@@ -6,8 +6,8 @@ welcome — a bug report with a reproduction is worth as much as a patch.
 ## The short version
 
 ```bash
-git clone https://github.com/ntson9p/markyou.git
-cd markyou
+git clone https://github.com/ntson9p/marknow.git
+cd marknow
 npm ci
 npm run dev          # http://localhost:5173
 ```

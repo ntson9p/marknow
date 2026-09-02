@@ -1,11 +1,11 @@
 name: Feature request
-description: Suggest something MarkYou should do
+description: Suggest something MarkNow should do
 labels: [enhancement]
 body:
   - type: markdown
     attributes:
       value: |
-        Before writing, it's worth a look at [`docs/requirements.md`](https://github.com/ntson9p/markyou/blob/main/docs/requirements.md).
+        Before writing, it's worth a look at [`docs/requirements.md`](https://github.com/ntson9p/marknow/blob/main/docs/requirements.md).
         It has a decision log explaining what was deliberately left out and why, plus a
         "later" list at the end — your idea may already be on it.
 

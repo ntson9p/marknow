@@ -23,7 +23,7 @@ test.describe('large document behaviour (§7, 1 MB)', () => {
     // with it off so the check targets "opens and remains editable".
     await page.addInitScript(() => {
       localStorage.setItem(
-        'markyou.ui',
+        'marknow.ui',
         JSON.stringify({ version: 0, state: { mode: 'raw', rawPreviewVisible: false } }),
       );
     });

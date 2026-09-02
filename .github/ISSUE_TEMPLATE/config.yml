@@ -1,11 +1,11 @@
 blank_issues_enabled: true
 contact_links:
   - name: Try the app
-    url: https://markyou.web.app/
+    url: https://marknow.web.app/
     about: The live editor — worth confirming the behaviour there before filing.
   - name: How it's meant to work
-    url: https://github.com/ntson9p/markyou/blob/main/docs/requirements.md
+    url: https://github.com/ntson9p/marknow/blob/main/docs/requirements.md
     about: The normative spec, with a decision log covering what was deliberately left out.
   - name: Report a security issue
-    url: https://github.com/ntson9p/markyou/security/advisories/new
+    url: https://github.com/ntson9p/marknow/security/advisories/new
     about: Please report vulnerabilities privately, not as a public issue.

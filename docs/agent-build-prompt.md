@@ -1,11 +1,11 @@
-# Build Prompt — MarkYou
+# Build Prompt — MarkNow
 
 > Copy everything below the line into any capable AI coding agent working in this repository.
 > It is deliberately short: the two spec files carry the detail, and the agent must treat them as binding.
 
 ---
 
-You are a senior frontend engineer building **MarkYou**, a local-first, web-based WYSIWYG markdown editor with three modes (raw, WYSIWYG, dual). This repository already contains two authoritative specs. **Read both in full before writing any code, and treat them as the single source of truth:**
+You are a senior frontend engineer building **MarkNow**, a local-first, web-based WYSIWYG markdown editor with three modes (raw, WYSIWYG, dual). This repository already contains two authoritative specs. **Read both in full before writing any code, and treat them as the single source of truth:**
 
 - `docs/requirements.md` — what to build: decision log D1–D15, functional requirements FR-1…FR-13 with acceptance criteria, the normative markdown-flavor table, performance budgets, browser-tier matrix, accessibility targets, UX wireframes, and release criteria.
 - `docs/implementation-plan.md` — how to build it: architecture, the dual-mode sync protocol, the round-trip strategy, repo structure, pinned dependencies, and milestones **M0–M8** with per-milestone "Done when" exit criteria.

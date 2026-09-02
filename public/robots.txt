@@ -1,9 +1,9 @@
-# https://markyou.web.app/robots.txt
-# MarkYou is a single-page app with no private routes, so everything is
+# https://marknow.web.app/robots.txt
+# MarkNow is a single-page app with no private routes, so everything is
 # crawlable. Firebase serves static files before applying the "**" rewrite
 # in firebase.json, so this file is reachable despite the catch-all.
 
 User-agent: *
 Allow: /
 
-Sitemap: https://markyou.web.app/sitemap.xml
+Sitemap: https://marknow.web.app/sitemap.xml

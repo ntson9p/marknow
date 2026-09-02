@@ -36,7 +36,7 @@ export function TopBar() {
       )}
       <div className="flex min-w-0 items-center gap-1.5">
         <span className="truncate text-sm font-medium" data-testid="doc-title">
-          {status === 'open' ? (fileName ?? 'Untitled') : 'MarkYou'}
+          {status === 'open' ? (fileName ?? 'Untitled') : 'MarkNow'}
         </span>
         {status === 'open' && dirty && (
           <span
@@ -62,7 +62,7 @@ export function TopBar() {
         </Button>
       )}
       {/* Next to the theme toggle, the other app-level preference: both are
-          "how MarkYou behaves", not "what this document is". */}
+          "how MarkNow behaves", not "what this document is". */}
       <Button
         variant="ghost"
         size="icon-sm"

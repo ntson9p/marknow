@@ -237,7 +237,7 @@ export function WelcomeScreen() {
           <section className="flex flex-col">
             <div className="flex items-center gap-3">
               <img src="/favicon.svg" alt="" className="size-10 rounded-xl shadow-sm" />
-              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">MarkYou</h1>
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">MarkNow</h1>
             </div>
             <p className="mt-3 max-w-md text-[15px] leading-relaxed text-muted-foreground">
               Write markdown the way you like it — raw source, rich text, or both side by side,

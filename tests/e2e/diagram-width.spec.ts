@@ -87,10 +87,10 @@ const TALL = [
 /** Turn the opt-in diagram scrollbars on before the app boots. */
 async function enableDiagramScroll(page: Page) {
   await page.addInitScript(() => {
-    const raw = window.localStorage.getItem('markyou.settings');
+    const raw = window.localStorage.getItem('marknow.settings');
     const persisted = raw ? JSON.parse(raw) : { state: {} };
     persisted.state = { ...persisted.state, diagramScroll: true };
-    window.localStorage.setItem('markyou.settings', JSON.stringify({ version: 0, ...persisted }));
+    window.localStorage.setItem('marknow.settings', JSON.stringify({ version: 0, ...persisted }));
   });
 }
 
@@ -98,10 +98,10 @@ async function open(page: Page, mode: 'wysiwyg' | 'raw', measure?: number, body 
   await pinMode(page, mode);
   if (measure !== undefined) {
     await page.addInitScript((ch) => {
-      const raw = window.localStorage.getItem('markyou.ui');
+      const raw = window.localStorage.getItem('marknow.ui');
       const persisted = raw ? JSON.parse(raw) : { state: {} };
       persisted.state = { ...persisted.state, wysiwygMeasure: ch };
-      window.localStorage.setItem('markyou.ui', JSON.stringify({ version: 0, ...persisted }));
+      window.localStorage.setItem('marknow.ui', JSON.stringify({ version: 0, ...persisted }));
     }, measure);
   }
   await stubFsa(page);

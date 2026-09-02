@@ -23,6 +23,6 @@ describe('settings store (FR-13)', () => {
 
   it('persists under the shared settings key', () => {
     useSettingsStore.getState().setDiagramScroll(true);
-    expect(localStorage.getItem('markyou.settings')).toContain('"diagramScroll":true');
+    expect(localStorage.getItem('marknow.settings')).toContain('"diagramScroll":true');
   });
 });

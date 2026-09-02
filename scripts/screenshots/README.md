@@ -20,7 +20,7 @@ npm run screenshots -- hero-dark slash-menu
 - **One fixed document.** [`demo-doc.md`](demo-doc.md) is seeded into the app through the
   same File System Access stub the e2e suite uses, so no file picker is involved and the
   content never varies.
-- **Theme and layout are pinned** by writing `markyou.theme` and `markyou.ui` to
+- **Theme and layout are pinned** by writing `marknow.theme` and `marknow.ui` to
   localStorage before the app boots — mode, outline visibility and split ratios included.
 - **Motion is frozen.** Transitions and animations are zeroed and the caret layers hidden,
   so two runs of the same shot are pixel-identical.

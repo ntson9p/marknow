@@ -101,7 +101,7 @@ export const useUiStore = create<UiState>()(
       toggleDiffWrap: () => set((s) => ({ diffWrap: !s.diffWrap })),
     }),
     {
-      name: 'markyou.ui',
+      name: 'marknow.ui',
       partialize: (state) => ({
         mode: state.mode,
         rawPreviewVisible: state.rawPreviewVisible,

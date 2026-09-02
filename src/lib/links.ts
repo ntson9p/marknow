@@ -6,4 +6,4 @@
  * change. Kept in sync by hand with `repository.url` in package.json — the
  * manifest form there is a `git+` clone URL, not a browsable one.
  */
-export const REPO_URL = 'https://github.com/ntson9p/markyou';
+export const REPO_URL = 'https://github.com/ntson9p/marknow';

@@ -1,4 +1,4 @@
-# MarkYou — Implementation Plan
+# MarkNow — Implementation Plan
 
 **Version:** 1.0 · **Date:** 2026-07-24 · **Companion to:** [requirements.md](./requirements.md)
 **Assumption for estimates:** one experienced frontend engineer, full-time. Ranges are working days.
@@ -90,7 +90,7 @@ interface DocState {
 ## 4. Repository structure
 
 ```
-markyou/
+marknow/
 ├─ docs/                        # this plan + requirements
 ├─ public/                      # icons, manifest
 ├─ src/

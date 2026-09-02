@@ -1,5 +1,5 @@
 // Generates the PWA icon set (pure Node, no native deps).
-// Draws the MarkYou mark: an indigo tile with a white "M".
+// Draws the MarkNow mark: an indigo tile with a white "M".
 import { deflateSync, crc32 } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

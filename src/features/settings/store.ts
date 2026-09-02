@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 import { DEFAULT_STYLE_PREFS, type MarkdownStylePrefs } from '@/core/markdown/style';
 import type { EditorMode } from '@/app/store/ui';
 
-/** User settings (FR-13), persisted to `markyou.settings` in localStorage. */
+/** User settings (FR-13), persisted to `marknow.settings` in localStorage. */
 interface SettingsState {
   /** Drives D13 normalization (FR-13.2). */
   markdownStyle: MarkdownStylePrefs;
@@ -55,7 +55,7 @@ export const useSettingsStore = create<SettingsState>()(
       resetToDefaults: () => set({ ...DEFAULTS }),
     }),
     {
-      name: 'markyou.settings',
+      name: 'marknow.settings',
       // Deep-merge markdownStyle so settings persisted before a new style
       // pref existed (e.g. tableAlign) pick up its default instead of
       // rehydrating `undefined` into a controlled input.

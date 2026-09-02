@@ -4,7 +4,7 @@ type Schema = typeof defaultSchema;
 
 /**
  * Sanitize allowlist (§7 security): GitHub-style default schema extended for
- * the MarkYou flavor — math (KaTeX runs *after* sanitize on trusted, locally
+ * the MarkNow flavor — math (KaTeX runs *after* sanitize on trusted, locally
  * generated output), mermaid fences, callout boxes, highlight classes, and
  * data:/blob: image sources for the base64/asset-resolver flows (D14).
  * Raw HTML in documents passes through this schema — scripts, event handlers,

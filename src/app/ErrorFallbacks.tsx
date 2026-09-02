@@ -21,11 +21,11 @@ export function AppCrashFallback({ error }: { error: Error; reset: () => void })
       <div className="space-y-1">
         <h1 className="text-lg font-semibold">Something went wrong</h1>
         <p className="max-w-md text-sm text-muted-foreground">
-          MarkYou hit an unexpected error. Your most recent document is kept as a recoverable draft
+          MarkNow hit an unexpected error. Your most recent document is kept as a recoverable draft
           — reload to pick up where you left off.
         </p>
       </div>
-      <Button onClick={() => window.location.reload()}>Reload MarkYou</Button>
+      <Button onClick={() => window.location.reload()}>Reload MarkNow</Button>
       <ErrorDetail error={error} />
     </div>
   );

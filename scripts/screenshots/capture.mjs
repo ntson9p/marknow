@@ -37,8 +37,8 @@ const STEADY = `
 async function seed(page, theme, ui) {
   await page.addInitScript(
     ([t, uiState, name, text]) => {
-      localStorage.setItem('markyou.theme', t);
-      localStorage.setItem('markyou.ui', JSON.stringify({ version: 0, state: uiState }));
+      localStorage.setItem('marknow.theme', t);
+      localStorage.setItem('marknow.ui', JSON.stringify({ version: 0, state: uiState }));
       const files = { [name]: text };
       const handle = (n) => ({
         kind: 'file',

@@ -3,7 +3,7 @@ import { create } from 'zustand';
 
 export type Theme = 'light' | 'dark' | 'system';
 
-const STORAGE_KEY = 'markyou.theme';
+const STORAGE_KEY = 'marknow.theme';
 
 function isTheme(value: unknown): value is Theme {
   return value === 'light' || value === 'dark' || value === 'system';

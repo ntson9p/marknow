@@ -4,7 +4,7 @@ import { getFakeDisk, seedFakeFile, stubFsa } from './helpers';
 
 /** A nontrivial document exercising most of the flavor table (§6). */
 const README = [
-  '# MarkYou Sample',
+  '# MarkNow Sample',
   '',
   'A paragraph with **bold**, *italic*, `code`, ~~strike~~ and a [link](https://example.com).',
   '',
@@ -459,7 +459,7 @@ test.describe('WYSIWYG mode (FR-5)', () => {
     await expect(editor(page)).toBeVisible({ timeout: 15000 });
 
     const doc = editor(page);
-    await expect(doc.locator('h1')).toHaveText('MarkYou Sample');
+    await expect(doc.locator('h1')).toHaveText('MarkNow Sample');
     await expect(doc.locator('strong').first()).toHaveText('bold');
     await expect(doc.locator('table.mk-table-grid')).toBeVisible();
     await expect(doc.locator('.callout-warning')).toContainText('Callouts render as styled boxes.');
@@ -475,7 +475,7 @@ test.describe('WYSIWYG mode (FR-5)', () => {
     const text = (await doc.innerText()).replace(/[\s\u200b]+/g, ' ');
     expect(text).not.toContain('**');
     expect(text).not.toContain('~~');
-    expect(text).not.toContain('# MarkYou');
+    expect(text).not.toContain('# MarkNow');
     expect(text).not.toContain('| Col A |');
   });
 

@@ -94,7 +94,7 @@ test.describe('review changes diff (unsaved vs. last saved)', () => {
     // collapse into ONE imprecise chunk with every line marked changed.
     await page.addInitScript(() => {
       window.localStorage.setItem(
-        'markyou.settings',
+        'marknow.settings',
         JSON.stringify({
           state: {
             markdownStyle: {

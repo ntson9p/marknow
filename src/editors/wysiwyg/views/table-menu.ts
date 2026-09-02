@@ -17,13 +17,12 @@ import {
   moveColumn,
   moveRow,
   resolveGrid,
-  selectWholeTable,
   type TableGrid,
 } from './table-ops';
 
 /**
- * The one menu behind every table control (FR-5.7): the pill chevrons, the
- * corner square, and the right-click context menu all open this.
+ * The one menu behind every table control (FR-5.7): the pill chevrons and the
+ * right-click context menu both open this.
  *
  * It mounts on `document.body` with `position: fixed` rather than inside the
  * NodeView. Two reasons: a popover anchored inside the table's scroll
@@ -305,23 +304,6 @@ export function rowMenuItems(target: Target, row: number): MenuItem[] {
       danger: true,
       disabled: !canDeleteRow(grid, row),
       run: () => deleteRow(ctx, view, tablePos, row),
-    },
-  ];
-}
-
-export function tableMenuItems({ ctx, view, tablePos }: Target): MenuItem[] {
-  return [
-    {
-      label: 'Select all cells',
-      icon: icons.table,
-      run: () => selectWholeTable(ctx, view, tablePos),
-    },
-    {
-      label: 'Delete table',
-      icon: icons.trash,
-      group: true,
-      danger: true,
-      run: () => deleteTable(ctx, view, tablePos),
     },
   ];
 }

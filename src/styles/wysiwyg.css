@@ -796,23 +796,6 @@ body > div[data-show] .link-preview,
   cursor: grabbing;
 }
 
-/* Select-the-whole-table square, at the top-left corner (Docs' affordance). */
-.wysiwyg-root .mk-table-corner {
-  position: absolute;
-  width: 0.9rem;
-  height: 0.9rem;
-  border: 1px solid var(--border);
-  border-radius: 0.25rem;
-  background: var(--popover);
-  cursor: pointer;
-  z-index: 40;
-}
-
-.wysiwyg-root .mk-table-corner:hover {
-  background: var(--primary);
-  border-color: var(--primary);
-}
-
 /* Insertion preview and drop indicator — the same 2px line, because they mean
  * the same thing: "this is the boundary you are about to land on". */
 .wysiwyg-root .mk-table-indicator {
@@ -850,9 +833,9 @@ body > div[data-show] .link-preview,
 
 /* ---------- table menu ---------- */
 
-/* Body-level and fixed: the one popover behind the pills, the corner and the
- * right-click menu. Outside the editor entirely, so it can neither be clipped
- * by the table's scroller nor contribute to its overflow. */
+/* Body-level and fixed: the one popover behind the pills and the right-click
+ * menu. Outside the editor entirely, so it can neither be clipped by the
+ * table's scroller nor contribute to its overflow. */
 .mk-table-menu {
   position: fixed;
   z-index: 60;

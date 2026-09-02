@@ -17,7 +17,6 @@ import {
   menuTarget,
   openTableMenu,
   rowMenuItems,
-  tableMenuItems,
 } from './table-menu';
 import {
   insertColumn,
@@ -93,7 +92,6 @@ class TableView implements NodeView {
   readonly #chrome: HTMLElement;
   readonly #tip: HTMLElement;
   readonly #indicator: HTMLElement;
-  readonly #corner: HTMLButtonElement;
 
   readonly #colPill: HTMLElement;
   readonly #colGrip: HTMLButtonElement;
@@ -143,9 +141,6 @@ class TableView implements NodeView {
     this.#tip.setAttribute('role', 'tooltip');
     this.#tip.hidden = true;
 
-    this.#corner = button('mk-table-corner', '', 'Table options');
-    this.#corner.hidden = true;
-
     this.#colGrip = button('mk-pill-grip', icons.gripHorizontal, 'Select or drag column');
     this.#colMore = button('mk-pill-more', icons.chevronDown, 'Column options');
     this.#colMore.setAttribute('aria-haspopup', 'menu');
@@ -166,7 +161,7 @@ class TableView implements NodeView {
     this.#rowPill.hidden = true;
     this.#rowPill.append(this.#rowGrip, this.#rowMore, this.#rowAdd);
 
-    this.#chrome.append(this.#indicator, this.#corner, this.#colPill, this.#rowPill, this.#tip);
+    this.#chrome.append(this.#indicator, this.#colPill, this.#rowPill, this.#tip);
     this.dom.append(this.#scroll, this.#chrome);
 
     this.#bind();
@@ -226,18 +221,6 @@ class TableView implements NodeView {
 
     const frame = this.#frameRect();
 
-    // The corner keeps the pills' company rather than appearing on its own
-    // mid-table, where a lone square in the gutter reads as an accident — and
-    // where the block handle already lives.
-    const first = this.#cell(0, 0);
-    const onEdge = hover.row === 0 || hover.col === 0;
-    this.#corner.hidden = !onEdge;
-    if (first && onEdge) {
-      const rect = first.getBoundingClientRect();
-      this.#corner.style.left = `${rect.left - frame.left - 21}px`;
-      this.#corner.style.top = `${rect.top - frame.top - 21}px`;
-    }
-
     // The column pill answers to the header row; it is anchored over the
     // header cell whether or not that is the cell being hovered.
     if (hover.row === 0) {
@@ -283,7 +266,6 @@ class TableView implements NodeView {
     this.#hover = null;
     this.#colPill.hidden = true;
     this.#rowPill.hidden = true;
-    this.#corner.hidden = true;
     this.#hideTip();
     this.#hideIndicator();
   }
@@ -406,7 +388,7 @@ class TableView implements NodeView {
 
   /* ---------- menus ---------- */
 
-  #openMenu(kind: 'row' | 'col' | 'table', owner: HTMLElement) {
+  #openMenu(kind: 'row' | 'col', owner: HTMLElement) {
     const pos = this.#tablePos;
     if (pos === undefined) return;
     if (this.#isMenuOwner(owner)) {
@@ -422,15 +404,13 @@ class TableView implements NodeView {
     const items =
       kind === 'col'
         ? columnMenuItems(target, this.#hover.col)
-        : kind === 'row'
-          ? rowMenuItems(target, this.#hover.row)
-          : tableMenuItems(target);
+        : rowMenuItems(target, this.#hover.row);
 
     owner.setAttribute('aria-expanded', 'true');
     openTableMenu({
       items,
       anchor: owner.getBoundingClientRect(),
-      label: kind === 'col' ? 'Column options' : kind === 'row' ? 'Row options' : 'Table options',
+      label: kind === 'col' ? 'Column options' : 'Row options',
       onClose: () => {
         owner.setAttribute('aria-expanded', 'false');
         // The menu takes focus while it is open, so hand it back.
@@ -514,12 +494,6 @@ class TableView implements NodeView {
     this.#scroll.addEventListener('scroll', () => {
       if (this.#hover) this.#layout();
     });
-
-    this.#corner.addEventListener('click', () => this.#openMenu('table', this.#corner));
-    this.#corner.addEventListener('pointerenter', () =>
-      this.#showTip(this.#corner, 'Table options'),
-    );
-    this.#corner.addEventListener('pointerleave', () => this.#hideTip());
 
     // `pointerdown` both selects and arms the drag, so a plain click on a grip
     // still selects — no separate click handler, which would select twice.

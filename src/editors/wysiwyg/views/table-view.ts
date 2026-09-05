@@ -67,6 +67,37 @@ interface DragState {
   axis: Axis;
   from: number;
   to: number;
+  /**
+   * Trailing edge of every row (bottom) or column (right) along the drag axis,
+   * in viewport space. Measured once at `pointerdown` and refreshed on scroll —
+   * re-reading it per `pointermove` would be the `getBoundingClientRect` storm
+   * the hover path already goes out of its way to avoid.
+   */
+  edges: number[];
+}
+
+/**
+ * The row or column whose band contains `coord`, clamped into `[min, max]`.
+ *
+ * Only the coordinate along the drag axis is consulted, and a pointer past
+ * either end resolves to the nearest legal slot. That is what lets the gesture
+ * continue anywhere on screen. Resolving the target by hit-testing the pointer
+ * instead — `elementFromPoint` — looks equivalent and is not: the grips sit
+ * *outside* the grid, a pill-width to its left and a pill-height above it, so a
+ * drag that travelled straight along its own axis never entered a cell and
+ * resolved to nothing at all.
+ */
+function bandIndex(edges: number[], coord: number, min: number, max: number) {
+  for (let i = min; i < max; i++) {
+    const edge = edges[i];
+    if (edge !== undefined && coord < edge) return i;
+  }
+  return max;
+}
+
+/** The boundary the dragged row or column would come to rest against. */
+function dropBoundary(drag: DragState) {
+  return drag.to > drag.from ? drag.to + 1 : drag.to;
 }
 
 function button(className: string, icon: string, label: string) {
@@ -106,6 +137,8 @@ class TableView implements NodeView {
   #hover: Hover | null = null;
   #hideTimer: number | null = null;
   #drag: DragState | null = null;
+  /** The in-flight drag's document scroll listener, so `destroy` can drop it. */
+  #dragScroll: (() => void) | null = null;
   #altHeld = false;
   /** Which add button the pointer is on, so Alt can relabel it live. */
   #addHover: Axis | null = null;
@@ -198,6 +231,14 @@ class TableView implements NodeView {
       row: this.#rows().indexOf(tr),
       col: Array.prototype.indexOf.call(tr.children, cell),
     };
+  }
+
+  /** Trailing edges of the rows or columns, in index order, in viewport space. */
+  #measureEdges(axis: Axis): number[] {
+    if (axis === 'row') return this.#rows().map((tr) => tr.getBoundingClientRect().bottom);
+    const header = this.#rows()[0];
+    if (!header) return [];
+    return Array.from(header.children).map((cell) => cell.getBoundingClientRect().right);
   }
 
   /* ---------- chrome visibility ---------- */
@@ -430,7 +471,9 @@ class TableView implements NodeView {
     const from = axis === 'col' ? this.#hover.col : this.#hover.row;
     if (axis === 'row' && from === 0) return;
 
-    this.#drag = { axis, from, to: from };
+    // Measuring ahead of the select below is safe: `.selectedCell` paints a
+    // background and cannot reflow the grid.
+    this.#drag = { axis, from, to: from, edges: this.#measureEdges(axis) };
     this.dom.classList.add('is-dragging');
     grip.setPointerCapture(event.pointerId);
     this.#hideTip();
@@ -443,18 +486,22 @@ class TableView implements NodeView {
       if (!drag) return;
       const grid = this.#gridInfo();
       if (!grid) return;
-      const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
-      const cell = this.#cellIndex(target);
-      if (!cell) return;
+      // Row 0 is the header: a row may pass over it but not come to rest there.
+      drag.to =
+        drag.axis === 'col'
+          ? bandIndex(drag.edges, moveEvent.clientX, 0, grid.cols - 1)
+          : bandIndex(drag.edges, moveEvent.clientY, 1, grid.rows - 1);
+      this.#showIndicator(drag.axis, dropBoundary(drag));
+    };
 
-      if (drag.axis === 'col') {
-        drag.to = Math.max(0, Math.min(cell.col, grid.cols - 1));
-        // Draw on the edge the column would come to rest against.
-        this.#showIndicator('col', drag.to > drag.from ? drag.to + 1 : drag.to);
-      } else {
-        drag.to = Math.max(1, Math.min(cell.row, grid.rows - 1));
-        this.#showIndicator('row', drag.to > drag.from ? drag.to + 1 : drag.to);
-      }
+    // The edges are viewport-space, so any scroll beneath the pointer — the
+    // table's own scroller, the page, any ancestor — invalidates them. Capture
+    // phase because `scroll` does not bubble.
+    const onScroll = () => {
+      const drag = this.#drag;
+      if (!drag) return;
+      drag.edges = this.#measureEdges(drag.axis);
+      this.#showIndicator(drag.axis, dropBoundary(drag));
     };
 
     const onUp = () => {
@@ -468,6 +515,8 @@ class TableView implements NodeView {
       grip.removeEventListener('pointermove', onMove);
       grip.removeEventListener('pointerup', onUp);
       grip.removeEventListener('pointercancel', onUp);
+      document.removeEventListener('scroll', onScroll, true);
+      this.#dragScroll = null;
       const tablePos = this.#tablePos;
       if (!drag || tablePos === undefined || drag.to === drag.from) return;
       if (drag.axis === 'col') moveColumn(this.#ctx, this.#view, tablePos, drag.from, drag.to);
@@ -477,6 +526,10 @@ class TableView implements NodeView {
     grip.addEventListener('pointermove', onMove);
     grip.addEventListener('pointerup', onUp);
     grip.addEventListener('pointercancel', onUp);
+    // The grip's own listeners die with the detached element; this one outlives
+    // the NodeView, so `destroy` has to be able to find it.
+    this.#dragScroll = onScroll;
+    document.addEventListener('scroll', onScroll, true);
   }
 
   /* ---------- wiring ---------- */
@@ -589,6 +642,10 @@ class TableView implements NodeView {
     window.removeEventListener('keydown', this.#onKey);
     window.removeEventListener('keyup', this.#onKey);
     window.removeEventListener('blur', this.#onWindowBlur);
+    // A view torn down mid-drag never sees its own `pointerup`.
+    if (this.#dragScroll) document.removeEventListener('scroll', this.#dragScroll, true);
+    this.#dragScroll = null;
+    this.#drag = null;
     this.#cancelHide();
     closeTableMenu();
   }

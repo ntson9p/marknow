@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { getFakeDisk, seedFakeFile, stubFsa } from './helpers';
 
@@ -53,6 +53,14 @@ const TABLE_DOC = [
   '| frame | A settings document |',
   '| parent | Base reservation |',
   '',
+].join('\n');
+
+/** The same table under enough filler to make the document scroll. */
+const SCROLLING_TABLE_DOC = [
+  '# Long',
+  '',
+  ...Array.from({ length: 40 }, (_, i) => `Filler paragraph number ${i}.\n`),
+  TABLE_DOC.split('\n').slice(2).join('\n'),
 ].join('\n');
 
 /** A tight nested list beside a loose one, for the FR-4.4 spacing test. */
@@ -245,28 +253,119 @@ test.describe('WYSIWYG mode (FR-5)', () => {
     await expect(editor(page).locator('th').nth(1)).toHaveText('Term');
   });
 
-  test('dragging the row grip reorders rows (FR-5.7)', async ({ page }) => {
+  /* The grips sit outside the grid — the row pill a pill-width to the left of
+   * the first column, the column pill a pill-height above the header. So every
+   * drag below travels *straight along its own axis*, never entering a cell:
+   * that is the gesture a user actually makes, and resolving the drop by
+   * hit-testing the pointer made it a silent no-op. */
+
+  const rowGrip = (page: Page) =>
+    page.locator('.mk-table-pill-row button[aria-label="Select or drag row"]');
+  const firstColumn = (page: Page) =>
+    editor(page).locator('tbody tr td:first-child').allTextContents();
+
+  async function openTable(page: Page) {
     await stubFsa(page);
     await seedFakeFile(page, 'table.md', TABLE_DOC);
     await page.goto('/');
     await page.getByTestId('welcome-open').click();
     await expect(editor(page).locator('table.mk-table-grid')).toBeVisible({ timeout: 15000 });
+  }
 
-    const firstColumn = () => editor(page).locator('tbody tr td:first-child').allTextContents();
-    expect(await firstColumn()).toEqual(['slot', 'frame', 'parent']);
+  /** Press `grip` and travel to `to` without ever leaving the grip's own axis. */
+  async function dragGrip(page: Page, grip: Locator, to: { x?: number; y?: number }) {
+    const box = (await grip.boundingBox())!;
+    const startX = box.x + box.width / 2;
+    const startY = box.y + box.height / 2;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(to.x ?? startX, to.y ?? startY, { steps: 10 });
+    await page.mouse.up();
+  }
+
+  test('dragging the row grip straight down reorders rows (FR-5.7)', async ({ page }) => {
+    await openTable(page);
+    expect(await firstColumn(page)).toEqual(['slot', 'frame', 'parent']);
 
     await editor(page).locator('td', { hasText: 'frame' }).hover();
-    const grip = page.locator('.mk-table-pill-row button[aria-label="Select or drag row"]');
+    const grip = rowGrip(page);
     await expect(grip).toBeVisible();
-    const from = (await grip.boundingBox())!;
     const onto = (await editor(page).locator('td', { hasText: 'parent' }).boundingBox())!;
 
-    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    // Only `y` changes: the pointer stays in the margin, well left of the table.
+    await dragGrip(page, grip, { y: onto.y + onto.height / 2 });
+
+    await expect.poll(() => firstColumn(page)).toEqual(['slot', 'parent', 'frame']);
+  });
+
+  test('a row dragged past either end clamps to the nearest legal slot (FR-5.7)', async ({
+    page,
+  }) => {
+    await openTable(page);
+    const table = (await editor(page).locator('table.mk-table-grid').boundingBox())!;
+    // Past the table but still on screen: Firefox stops delivering synthetic
+    // moves once they leave the viewport, which would test the harness rather
+    // than the clamp.
+    const below = Math.min(table.y + table.height + 250, page.viewportSize()!.height - 4);
+    expect(below).toBeGreaterThan(table.y + table.height);
+
+    // Far below the last row: the drop lands on it, not nowhere.
+    await editor(page).locator('td', { hasText: 'frame' }).hover();
+    await dragGrip(page, rowGrip(page), { y: below });
+    await expect.poll(() => firstColumn(page)).toEqual(['slot', 'parent', 'frame']);
+
+    // Far above the table: the header row is not a destination, so it stops at
+    // the first body row.
+    await editor(page).locator('td', { hasText: 'frame' }).hover();
+    await dragGrip(page, rowGrip(page), { y: Math.max(2, table.y - 150) });
+    await expect.poll(() => firstColumn(page)).toEqual(['frame', 'slot', 'parent']);
+  });
+
+  test('a drag survives the document scrolling under it (FR-5.7)', async ({ page }) => {
+    // The band geometry is cached in viewport space at pointerdown, so a scroll
+    // mid-drag has to invalidate it or the drop lands on the wrong row.
+    await stubFsa(page);
+    await seedFakeFile(page, 'long.md', SCROLLING_TABLE_DOC);
+    await page.goto('/');
+    await page.getByTestId('welcome-open').click();
+    await expect(editor(page).locator('table.mk-table-grid')).toBeVisible({ timeout: 15000 });
+
+    const frame = editor(page).locator('td', { hasText: 'frame' });
+    await frame.scrollIntoViewIfNeeded();
+    expect(await firstColumn(page)).toEqual(['slot', 'frame', 'parent']);
+
+    await frame.hover();
+    const grip = rowGrip(page);
+    await expect(grip).toBeVisible();
+    const box = (await grip.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
-    await page.mouse.move(onto.x + onto.width / 2, onto.y + onto.height / 2, { steps: 10 });
+
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(200);
+
+    // Aim at where the last row sits *after* the scroll.
+    const onto = (await editor(page).locator('td', { hasText: 'parent' }).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, onto.y + onto.height / 2, { steps: 8 });
     await page.mouse.up();
 
-    await expect.poll(firstColumn).toEqual(['slot', 'parent', 'frame']);
+    await expect.poll(() => firstColumn(page)).toEqual(['slot', 'parent', 'frame']);
+  });
+
+  test('dragging the column grip sideways reorders columns (FR-5.7)', async ({ page }) => {
+    await openTable(page);
+    const headers = () => editor(page).locator('th').allTextContents();
+    expect(await headers()).toEqual(['Term', 'Meaning']);
+
+    await editor(page).locator('th', { hasText: 'Term' }).hover();
+    const grip = page.locator('.mk-table-pill-col button[aria-label="Select or drag column"]');
+    await expect(grip).toBeVisible();
+    const onto = (await editor(page).locator('th', { hasText: 'Meaning' }).boundingBox())!;
+
+    // Only `x` changes: the pointer stays on the band above the header row.
+    await dragGrip(page, grip, { x: onto.x + onto.width / 2 });
+
+    await expect.poll(headers).toEqual(['Meaning', 'Term']);
   });
 
   test('math input rule renders KaTeX; click opens the source editor (FR-5.8)', async ({

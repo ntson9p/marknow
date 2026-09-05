@@ -228,6 +228,55 @@ test.describe('WYSIWYG mode (FR-5)', () => {
     expect((await getFakeDisk(page))['table.md']).not.toContain('frame');
   });
 
+  test('the right-click menu duplicates a row and a column (FR-5.7)', async ({ page }) => {
+    await stubFsa(page);
+    await seedFakeFile(page, 'table.md', TABLE_DOC);
+    await page.goto('/');
+    await page.getByTestId('welcome-open').click();
+    await expect(editor(page).locator('table.mk-table-grid')).toBeVisible({ timeout: 15000 });
+
+    const menu = page.locator('.mk-table-menu');
+    const rows = () => editor(page).locator('tbody tr td:first-child').allTextContents();
+    const headers = () => editor(page).locator('th').allTextContents();
+    expect(await rows()).toEqual(['slot', 'frame', 'parent']);
+    expect(await headers()).toEqual(['Term', 'Meaning']);
+
+    // The pills only reach the header row and the first column; mid-table this
+    // is the whole route to a duplicate.
+    await editor(page).locator('td', { hasText: 'A settings document' }).click({ button: 'right' });
+    await expect(menu).toBeVisible();
+    await menu.getByRole('menuitem', { name: 'Duplicate row' }).click();
+    await expect.poll(rows).toEqual(['slot', 'frame', 'frame', 'parent']);
+
+    await editor(page).locator('td', { hasText: 'Base reservation' }).click({ button: 'right' });
+    await expect(menu).toBeVisible();
+    await menu.getByRole('menuitem', { name: 'Duplicate column' }).click();
+    await expect.poll(headers).toEqual(['Term', 'Meaning', 'Meaning']);
+
+    // The duplicates survive a round trip to disk.
+    await page.waitForTimeout(600); // push debounce
+    await page.keyboard.press('ControlOrMeta+s');
+    await expect(page.getByTestId('status-save')).toContainText('Saved');
+    const saved = (await getFakeDisk(page))['table.md']!;
+    expect(saved).toContain('| frame | A settings document | A settings document |');
+    expect(saved.match(/\| frame \|/g)).toHaveLength(2);
+  });
+
+  test('the right-click menu cannot duplicate the header row (FR-5.7)', async ({ page }) => {
+    await stubFsa(page);
+    await seedFakeFile(page, 'table.md', TABLE_DOC);
+    await page.goto('/');
+    await page.getByTestId('welcome-open').click();
+    await expect(editor(page).locator('table.mk-table-grid')).toBeVisible({ timeout: 15000 });
+
+    // GFM has exactly one header row, so cloning it is not representable.
+    await editor(page).locator('th', { hasText: 'Term' }).click({ button: 'right' });
+    const menu = page.locator('.mk-table-menu');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('menuitem', { name: 'Duplicate row' })).toBeDisabled();
+    await expect(menu.getByRole('menuitem', { name: 'Duplicate column' })).toBeEnabled();
+  });
+
   test('the insert + names its direction and Alt flips it (FR-5.7)', async ({ page }) => {
     await stubFsa(page);
     await seedFakeFile(page, 'table.md', TABLE_DOC);

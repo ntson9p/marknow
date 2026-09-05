@@ -309,10 +309,15 @@ export function rowMenuItems(target: Target, row: number): MenuItem[] {
 }
 
 /**
- * The right-click menu: the Docs shape — insert in all four directions, then
- * the three deletes — flattened into one list so no cell is more than one
- * gesture from any structural edit. This is what makes the pills' header-row
- * activation affordable: the pointer never *has* to travel to row 1.
+ * The right-click menu: the Docs shape — insert in all four directions,
+ * duplicate along either axis, then the three deletes — flattened into one list
+ * so no cell is more than one gesture from any structural edit. This is what
+ * makes the pills' header-row activation affordable: the pointer never *has* to
+ * travel to row 1.
+ *
+ * Each group runs row-op before column-op, and the duplicates sit with the
+ * inserts exactly as they do in the pill menus: someone who learns where
+ * "Duplicate row" lives in one menu finds it in the same place in the other.
  */
 export function contextMenuItems(target: Target, row: number, col: number): MenuItem[] {
   const { ctx, view, tablePos, grid } = target;
@@ -337,6 +342,18 @@ export function contextMenuItems(target: Target, row: number, col: number): Menu
       label: 'Insert 1 column right',
       icon: icons.arrowRight,
       run: () => insertColumn(ctx, view, tablePos, col + 1),
+    },
+    {
+      label: 'Duplicate row',
+      icon: icons.copy,
+      // Cloning row 0 would need a second header row, which the schema forbids.
+      disabled: row === 0,
+      run: () => duplicateRow(view, tablePos, row),
+    },
+    {
+      label: 'Duplicate column',
+      icon: icons.copy,
+      run: () => duplicateColumn(view, tablePos, col),
     },
     ...alignmentItems(target, col).map((item, index) => ({
       ...item,

@@ -3,7 +3,6 @@ import { commandsCtx } from '@milkdown/kit/core';
 import type { CmdKey } from '@milkdown/kit/core';
 import type { Ctx } from '@milkdown/kit/ctx';
 import {
-  toggleInlineCodeCommand,
   wrapInBlockquoteCommand,
   wrapInBulletListCommand,
   wrapInHeadingCommand,
@@ -14,7 +13,7 @@ import { keymap } from '@milkdown/kit/prose/keymap';
 import type { EditorState } from '@milkdown/kit/prose/state';
 import { $prose } from '@milkdown/kit/utils';
 
-import { toggleTaskListCommand } from './commands';
+import { insertCodeCommand, toggleTaskListCommand } from './commands';
 
 /**
  * The §9.3 shortcut set for WYSIWYG mode (FR-5.3), on top of the preset
@@ -64,7 +63,9 @@ export const wysiwygKeymap = $prose((ctx) => {
   }
 
   return keymap({
-    'Mod-e': call(toggleInlineCodeCommand),
+    // The toolbar button advertises this shortcut by name, so they share one
+    // command: inline code, or a fenced block when the line is empty.
+    'Mod-e': call(insertCodeCommand),
     'Mod-Shift-x': call(toggleStrikethroughCommand),
     'Mod-Alt-1': call(wrapInHeadingCommand, 1),
     'Mod-Alt-2': call(wrapInHeadingCommand, 2),

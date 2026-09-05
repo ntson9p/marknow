@@ -140,4 +140,50 @@ describe('createSourceToolbarCommands (dual-mode toolbar → source pane)', () =
     createSourceToolbarCommands(view).quote();
     expect(view.state.doc.toString()).toBe('> quote me');
   });
+
+  // The code button used to need a selection to do anything at all. With a
+  // bare caret the line now decides which construct it gets — matching the
+  // WYSIWYG pane's `insertCodeCommand`.
+  describe('code button with no selection', () => {
+    it('opens a fenced block on an empty line, caret on the blank line inside', () => {
+      const view = makeView('', 0);
+      createSourceToolbarCommands(view).inlineCode();
+      expect(view.state.doc.toString()).toBe('```\n\n```');
+      expect(view.state.selection.main.head).toBe(4);
+    });
+
+    it('treats a whitespace-only line as empty', () => {
+      const view = makeView('   ', 3);
+      createSourceToolbarCommands(view).inlineCode();
+      expect(view.state.doc.toString()).toBe('```\n\n```');
+      expect(view.state.selection.main.head).toBe(4);
+    });
+
+    it('pads the fence with blank lines when the neighbours are prose', () => {
+      const view = makeView('before\n\nafter', 7);
+      createSourceToolbarCommands(view).inlineCode();
+      expect(view.state.doc.toString()).toBe('before\n\n```\n\n```\n\nafter');
+    });
+
+    it('opens a backtick pair on a non-empty line, caret between them', () => {
+      const view = makeView('run ', 4);
+      createSourceToolbarCommands(view).inlineCode();
+      expect(view.state.doc.toString()).toBe('run ``');
+      expect(view.state.selection.main.head).toBe(5);
+    });
+
+    it('still wraps a selection rather than fencing it', () => {
+      const view = makeView('run npm i now', 4, 9);
+      createSourceToolbarCommands(view).inlineCode();
+      expect(view.state.doc.toString()).toBe('run `npm i` now');
+    });
+
+    it('unwraps again on a second press', () => {
+      const view = makeView('run npm i now', 4, 9);
+      const commands = createSourceToolbarCommands(view);
+      commands.inlineCode();
+      commands.inlineCode();
+      expect(view.state.doc.toString()).toBe('run npm i now');
+    });
+  });
 });

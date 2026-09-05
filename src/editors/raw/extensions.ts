@@ -24,6 +24,7 @@ import {
 
 import { formatCommands } from '@/editors/raw/format-commands';
 import { imagePasteExtension } from '@/editors/raw/image-paste';
+import { insertCode } from '@/editors/raw/toolbar-commands';
 import { computeRawSelectionState } from '@/editors/raw/toolbar-state';
 import { rawEditorTheme, rawSyntaxHighlighting } from '@/editors/raw/theme';
 import type { WysiwygSelectionState } from '@/editors/wysiwyg/selection-state';
@@ -38,7 +39,7 @@ const formatKeymap = keymap.of([
   { key: 'Mod-b', run: formatCommands.bold },
   { key: 'Mod-i', run: formatCommands.italic },
   { key: 'Mod-Shift-x', run: formatCommands.strikethrough },
-  { key: 'Mod-e', run: formatCommands.inlineCode },
+  { key: 'Mod-e', run: insertCode },
   { key: 'Mod-k', run: formatCommands.link },
   { key: 'Mod-Alt-1', run: formatCommands.h1 },
   { key: 'Mod-Alt-2', run: formatCommands.h2 },

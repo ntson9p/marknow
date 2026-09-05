@@ -108,6 +108,28 @@ const wrapInFences: Command = (view) => {
   });
 };
 
+/**
+ * The code action, matching the WYSIWYG pane's `insertCodeCommand`: a bare
+ * caret on an empty line opens a fenced block with the caret on the blank line
+ * inside it. Anywhere else the backtick pair does its usual work — wrapping a
+ * selection, or opening an empty pair around the caret. Source is text, so
+ * unlike the rich pane there is nothing here that needs arming.
+ */
+export const insertCode: Command = (view) => {
+  const { state } = view;
+  const range = state.selection.main;
+  if (!range.empty) return formatCommands.inlineCode(view);
+
+  const line = state.doc.lineAt(range.head);
+  if (line.text.trim() !== '') return formatCommands.inlineCode(view);
+  // The whole line goes, not just the caret: `wrapInFences` would keep a blank
+  // line's indentation and hand the new block a first line of stray spaces.
+  return insertBlock(view, '```\n\n```', {
+    replace: { from: line.from, to: line.to },
+    inner: { from: 4 },
+  });
+};
+
 /** `> [!note]` callout wrapping the selection's full lines (FR-5.10 syntax). */
 const insertCallout: Command = (view) => {
   const { state } = view;
@@ -157,7 +179,7 @@ export function createSourceToolbarCommands(view: EditorView): ToolbarCommands {
     strong: () => exec(formatCommands.bold),
     emphasis: () => exec(formatCommands.italic),
     strikethrough: () => exec(formatCommands.strikethrough),
-    inlineCode: () => exec(formatCommands.inlineCode),
+    inlineCode: () => exec(insertCode),
     link: () => exec(formatCommands.link),
     bulletList: () => exec(formatCommands.bulletList),
     orderedList: () => exec(formatCommands.orderedList),

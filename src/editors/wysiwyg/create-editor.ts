@@ -50,6 +50,7 @@ import { bubbleTooltip, configureBubbleMenu } from './plugins/bubble-menu';
 import { codeBlockKeymap } from './plugins/code-block-keymap';
 import { findPlugin } from './plugins/find';
 import { imagePastePlugin } from './plugins/image-paste';
+import { inlineCodeCaretPlugin } from './plugins/inline-code-caret';
 import { listA11yPlugin } from './plugins/list-a11y';
 import { configureListItemBlock } from './plugins/list-item-block';
 import { placeholderPlugin } from './plugins/placeholder';
@@ -270,6 +271,8 @@ export function createWysiwygEditor(options: CreateWysiwygEditorOptions): Promis
       .use(block)
       .use(blockDropCursor)
       .use(placeholderPlugin)
+      // Makes an armed (empty-range) inline-code mark visible — see the plugin.
+      .use(inlineCodeCaretPlugin)
       .use(findPlugin)
       .use(listA11yPlugin)
       .use(tableContextMenu)

@@ -6,7 +6,6 @@ import {
   insertHrCommand,
   insertImageCommand,
   toggleEmphasisCommand,
-  toggleInlineCodeCommand,
   toggleStrongCommand,
   turnIntoTextCommand,
   wrapInBlockquoteCommand,
@@ -19,6 +18,7 @@ import { insertTableCommand, toggleStrikethroughCommand } from '@milkdown/kit/pr
 import type { ToolbarCommands } from '@/editors/toolbar-commands';
 
 import {
+  insertCodeCommand,
   insertDiagramCommand,
   insertMathBlockCommand,
   insertMathInlineCommand,
@@ -60,7 +60,14 @@ export function createRichToolbarCommands(editor: Editor | null): ToolbarCommand
     strong: () => run(toggleStrongCommand.key),
     emphasis: () => run(toggleEmphasisCommand.key),
     strikethrough: () => run(toggleStrikethroughCommand.key),
-    inlineCode: () => run(toggleInlineCodeCommand.key),
+    // Not `run`: on an empty line this creates a code block, whose NodeView
+    // focuses its own CodeMirror — the blanket refocus would snatch it back.
+    inlineCode: () =>
+      editor?.action((ctx) => {
+        ctx.get(commandsCtx).call(insertCodeCommand.key);
+        const view = ctx.get(editorViewCtx);
+        if (!view.state.selection.$head.parent.type.spec.code) view.focus();
+      }),
     link: () =>
       editor?.action((ctx) => {
         const view = ctx.get(editorViewCtx);

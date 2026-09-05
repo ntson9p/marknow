@@ -1029,6 +1029,31 @@ body > div[data-show] .link-preview,
   color: var(--muted-foreground);
 }
 
+/* ---------- armed inline code (empty-selection caret chip) ---------- */
+
+/* Drawn by `inlineCodeCaretPlugin` while the inline-code mark is armed over an
+   empty range. The span itself is inert and zero-width — the chip is a
+   pseudo-element painted around the caret, so no text shifts while it shows
+   and none of it is ever serialized. */
+.wysiwyg-root .mk-inline-code-caret {
+  position: relative;
+  pointer-events: none;
+}
+
+/* Offset by `code`'s own left padding (0.35em of 0.875em) so the caret lands
+   exactly where the first character will, and sized like the empty span it
+   stands for, plus a little so it reads as a chip rather than a smudge. */
+.wysiwyg-root .mk-inline-code-caret::before {
+  content: '';
+  position: absolute;
+  left: -0.31em;
+  top: -0.15em;
+  width: 0.72em;
+  height: 1.3em;
+  border-radius: 4px;
+  background: var(--doc-code-bg);
+}
+
 /* ---------- bubble menu (FR-5.4) ---------- */
 
 .milkdown-bubble-menu,

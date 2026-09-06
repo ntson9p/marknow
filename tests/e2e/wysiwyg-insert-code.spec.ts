@@ -182,6 +182,54 @@ test.describe('Code button with no selection (FR-5.2)', () => {
     expect(after.paraHTML).toBe('are');
   });
 
+  test('the chip stands exactly where the real span will, flush after the text', async ({
+    page,
+  }) => {
+    await newWysiwygDoc(page);
+    await page.keyboard.type('you');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('are');
+
+    // Right edge of the word, and what a genuine empty <code> would measure in
+    // this very document — so the assertions below hard-code no pixel values.
+    const reference = await page.evaluate(() => {
+      const para = document.querySelector('.ProseMirror p:last-of-type')!;
+      const range = document.createRange();
+      range.selectNodeContents(para.firstChild!);
+
+      const probe = document.createElement('p');
+      probe.style.position = 'absolute';
+      probe.style.visibility = 'hidden';
+      probe.innerHTML = '<code></code>';
+      document.querySelector('.wysiwyg-root')!.appendChild(probe);
+      const emptyWidth = probe.querySelector('code')!.getBoundingClientRect().width;
+      probe.remove();
+
+      return { wordEnd: range.getBoundingClientRect().right, emptyWidth };
+    });
+
+    await codeButton(page).click();
+    await expect(chip(page)).toBeVisible();
+    const armed = await page.evaluate(() => {
+      const r = document.querySelector('.mk-inline-code-caret')!.getBoundingClientRect();
+      return { left: r.left, width: r.width };
+    });
+
+    // Insetting the chip to sit around the caret put its left edge 5px *inside*
+    // the previous word, which read as the chip being welded to it.
+    expect(armed.left).toBeCloseTo(reference.wordEnd, 0);
+    expect(armed.width).toBeCloseTo(reference.emptyWidth, 0);
+
+    // ...and the span that replaces it starts in the same place, so the grey
+    // never jumps — it only grows.
+    await page.keyboard.type('here');
+    await expect(editor(page).locator('p code')).toHaveText('here');
+    const codeLeft = await page.evaluate(
+      () => document.querySelector('.ProseMirror p code')!.getBoundingClientRect().left,
+    );
+    expect(codeLeft).toBeCloseTo(armed.left, 0);
+  });
+
   test('the chip tracks the text when the document scrolls', async ({ page }) => {
     // The plugin registers no scroll listener: it relies on the scroll
     // container being an *ancestor* of `.wysiwyg-root`, so chip and text share

@@ -26,9 +26,18 @@ import { $prose } from '@milkdown/kit/utils';
  * together — no scroll listener, no drift.
  */
 
-/** Fractions of the caret's own font size, matching `.md-doc code`'s padding. */
-const CHIP_INSET = 0.31;
-const CHIP_WIDTH = 0.72;
+/**
+ * Width of a real empty `<code>`, as a fraction of the surrounding font size —
+ * measured in the live document rather than derived: 9.78px against a 16px
+ * paragraph, sitting flush against the text before it (`margin-left: 0`).
+ *
+ * The chip is precisely that box, so the grey never moves: typing replaces it
+ * with a span of the same origin that simply grows rightward. What separates
+ * the words in a filled span is the span's own `padding-left`, which lives
+ * *inside* the grey — so insetting the chip to centre it on the caret bought a
+ * caret-in-the-box look by eating 5px of the preceding word instead.
+ */
+const CHIP_WIDTH = 0.611;
 
 function isArmed(state: EditorState): boolean {
   const type = state.schema.marks.inlineCode;
@@ -100,7 +109,9 @@ class InlineCodeCaretView {
     // containing block. The scroll terms are zero today and cost nothing.
     const left = coords.left - box.left - root.clientLeft + root.scrollLeft;
     const top = coords.top - box.top - root.clientTop + root.scrollTop;
-    chip.style.left = `${left - CHIP_INSET * size}px`;
+    // Flush at the caret, which is where the real span's left edge lands — not
+    // inset to sit around the caret, which reached back into the word before.
+    chip.style.left = `${left}px`;
     chip.style.top = `${top}px`;
     chip.style.width = `${CHIP_WIDTH * size}px`;
     chip.style.height = `${coords.bottom - coords.top}px`;

@@ -209,4 +209,76 @@ test.describe('WYSIWYG UX polish (M4)', () => {
     const texts = await editor(page).locator('p').allInnerTexts();
     expect(texts).toEqual(['First block', 'Inserted', 'Second block']);
   });
+
+  // The bubble and the link editor are both anchored to the selection, and the
+  // link editor deliberately *keeps* that selection while you type a URL — so
+  // every selection-shaped reason to show a bubble still held while the link
+  // editor was open. Both sat at `z-index: 60` under the same parent, and the
+  // bubble is registered second, so it painted over the URL field and took its
+  // clicks with it.
+  test.describe('the bubble yields to the link editor (FR-5.1, FR-5.4)', () => {
+    const bubble = (page: Page) => page.locator('.milkdown-bubble-menu');
+    const linkInput = (page: Page) => page.locator('.milkdown-link-edit .input-area');
+
+    async function selectedThenLink(page: Page) {
+      await newWysiwygDoc(page);
+      await page.keyboard.type('hello world');
+      // A TextSelection, not the AllSelection that Ctrl+A yields.
+      await page.keyboard.press('Home');
+      await page.keyboard.press('Shift+End');
+      await expect(bubble(page)).toHaveAttribute('data-show', 'true');
+      await page.keyboard.press('ControlOrMeta+k');
+      await expect(linkInput(page)).toBeVisible();
+    }
+
+    test('the bubble hides while the link editor is open', async ({ page }) => {
+      await selectedThenLink(page);
+      await expect(bubble(page)).toHaveAttribute('data-show', 'false');
+    });
+
+    test('nothing covers the URL field', async ({ page }) => {
+      await selectedThenLink(page);
+
+      // Hit-test the full width of the input rather than its centre alone: the
+      // bubble's controls spanned nearly all of it, so a single probe point
+      // could pass through a gap between two buttons and miss the bug.
+      const covering = await page.evaluate(() => {
+        const input = document.querySelector('.milkdown-link-edit .input-area')!;
+        const r = input.getBoundingClientRect();
+        const y = (r.top + r.bottom) / 2;
+        const hits = new Set<string>();
+        for (let x = r.left + 2; x < r.right; x += 8) {
+          const el = document.elementFromPoint(x, y);
+          if (el && el !== input && !input.contains(el)) hits.add(el.className || el.tagName);
+        }
+        return [...hits];
+      });
+      expect(covering).toEqual([]);
+    });
+
+    test('clicking the URL field types a URL instead of formatting the text', async ({ page }) => {
+      await selectedThenLink(page);
+
+      // Aiming at the URL box used to land on the bubble's Bold button, which
+      // bolded the selection, closed the link editor and stole focus back.
+      await linkInput(page).click();
+      await expect(linkInput(page)).toBeFocused();
+      await page.keyboard.type('https://example.com');
+      await page.keyboard.press('Enter');
+
+      await expect(editor(page).locator('a[href="https://example.com"]')).toHaveText('hello world');
+      await expect(editor(page).locator('strong')).toHaveCount(0);
+    });
+
+    test('Escape brings the bubble back for the still-live selection', async ({ page }) => {
+      await selectedThenLink(page);
+      await expect(bubble(page)).toHaveAttribute('data-show', 'false');
+
+      // Closing the editor restores focus without a transaction, so nothing
+      // would re-evaluate the bubble were it not listening for focus.
+      await page.keyboard.press('Escape');
+      await expect(bubble(page)).toHaveAttribute('data-show', 'true');
+      await expect(editor(page).locator('p')).toHaveText('hello world');
+    });
+  });
 });

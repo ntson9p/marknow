@@ -1,3 +1,4 @@
+import { linkTooltipState } from '@milkdown/kit/component/link-tooltip';
 import { commandsCtx, editorViewCtx } from '@milkdown/kit/core';
 import type { CmdKey } from '@milkdown/kit/core';
 import type { Ctx } from '@milkdown/kit/ctx';
@@ -32,12 +33,24 @@ interface MarkButton {
 }
 
 class BubbleMenuView {
+  readonly #ctx: Ctx;
+  readonly #view: EditorView;
   readonly #content: HTMLElement;
   readonly #provider: TooltipProvider;
   readonly #markButtons: MarkButton[] = [];
   readonly #turnInto: HTMLSelectElement;
+  #unwatchLinkMode: () => void = () => {};
+  /**
+   * The link editor takes focus without producing a transaction, and a DOM
+   * focus change alone never reaches a ProseMirror plugin — so re-evaluate
+   * when the editor gets focus back, or the menu stays hidden after Escape
+   * until the caret happens to move.
+   */
+  readonly #onEditorFocus = () => this.#provider.update(this.#view);
 
   constructor(ctx: Ctx, view: EditorView) {
+    this.#ctx = ctx;
+    this.#view = view;
     const content = document.createElement('div');
     content.className = 'milkdown-bubble-menu';
     content.setAttribute('role', 'toolbar');
@@ -149,6 +162,16 @@ class BubbleMenuView {
       floatingUIOptions: { strategy: 'fixed' },
     });
 
+    // The link editor keeps the selection it was opened on, so every
+    // selection-shaped test still says "show a bubble here". It announces
+    // itself through this slice instead — the same one the kit's own link
+    // *preview* tooltip watches to get out of the way. `#shouldShow` reads it
+    // too; this covers the closing edge, which arrives without a transaction.
+    this.#unwatchLinkMode = ctx.use(linkTooltipState.key).on(({ mode }) => {
+      if (mode === 'edit') this.#provider.hide();
+    });
+    view.dom.addEventListener('focus', this.#onEditorFocus);
+
     this.update(view);
   }
 
@@ -157,6 +180,10 @@ class BubbleMenuView {
     const { selection } = state;
     const { empty, from, to } = selection;
     if (!(selection instanceof TextSelection)) return false;
+    // One surface per selection: while the link editor is open it owns this
+    // range, and both anchor to the same rect — so a bubble here lands on top
+    // of the URL field and swallows the clicks meant for it.
+    if (this.#ctx.get(linkTooltipState.key).mode === 'edit') return false;
     const isTooltipFocused = this.#content.contains(document.activeElement);
     if ((!view.hasFocus() && !isTooltipFocused) || empty || !view.editable) return false;
     if (state.doc.textBetween(from, to).length === 0) return false;
@@ -182,6 +209,8 @@ class BubbleMenuView {
   }
 
   destroy() {
+    this.#unwatchLinkMode();
+    this.#view.dom.removeEventListener('focus', this.#onEditorFocus);
     this.#provider.destroy();
     this.#content.remove();
   }

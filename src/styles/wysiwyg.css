@@ -1032,26 +1032,30 @@ body > div[data-show] .link-preview,
 /* ---------- armed inline code (empty-selection caret chip) ---------- */
 
 /* Drawn by `inlineCodeCaretPlugin` while the inline-code mark is armed over an
-   empty range. The span itself is inert and zero-width — the chip is a
-   pseudo-element painted around the caret, so no text shifts while it shows
-   and none of it is ever serialized. */
+   empty range. It is a sibling of the editor, never a child of it — see the
+   plugin for why nothing may be placed inside the textblock. Every coordinate
+   is set from script against `.wysiwyg-root`'s padding box, so the only job
+   here is paint: `code`'s own background, and inert to the pointer. */
 .wysiwyg-root .mk-inline-code-caret {
-  position: relative;
-  pointer-events: none;
-}
-
-/* Offset by `code`'s own left padding (0.35em of 0.875em) so the caret lands
-   exactly where the first character will, and sized like the empty span it
-   stands for, plus a little so it reads as a chip rather than a smudge. */
-.wysiwyg-root .mk-inline-code-caret::before {
-  content: '';
   position: absolute;
-  left: -0.31em;
-  top: -0.15em;
-  width: 0.72em;
-  height: 1.3em;
   border-radius: 4px;
   background: var(--doc-code-bg);
+  pointer-events: none;
+  /* The chip has to paint *over* the text — putting it behind would mean a
+     stacking context on `.wysiwyg-root`, which traps the bubble menu and the
+     table menus under the page-measure handles. Blending instead of covering
+     gets the same result for free: multiply leaves dark glyphs untouched while
+     tinting the page, and screen does the mirror image on a dark surface. The
+     mode is scoped to this element, so nothing else's layering moves. */
+  mix-blend-mode: multiply;
+}
+
+.dark .wysiwyg-root .mk-inline-code-caret {
+  mix-blend-mode: screen;
+}
+
+.wysiwyg-root .mk-inline-code-caret[hidden] {
+  display: none;
 }
 
 /* ---------- bubble menu (FR-5.4) ---------- */

@@ -1,3 +1,4 @@
+import { editorViewCtx } from '@milkdown/kit/core';
 import type { Ctx } from '@milkdown/kit/ctx';
 import {
   bulletListSchema,
@@ -6,8 +7,9 @@ import {
 } from '@milkdown/kit/preset/commonmark';
 import type { Attrs, Node as ProseNode, NodeType } from '@milkdown/kit/prose/model';
 import { liftListItem, wrapRangeInList } from '@milkdown/kit/prose/schema-list';
-import { TextSelection } from '@milkdown/kit/prose/state';
+import { AllSelection, TextSelection } from '@milkdown/kit/prose/state';
 import type { EditorState, Transaction } from '@milkdown/kit/prose/state';
+import type { EditorView } from '@milkdown/kit/prose/view';
 import { $command } from '@milkdown/kit/utils';
 
 /**
@@ -81,13 +83,17 @@ function retype(items: ProseNode[], kind: ListKind, base: number): ProseNode[] {
   );
 }
 
+/** A list of these items — the same test `liftListItem` uses to find its range. */
+const isListOf = (itemType: NodeType) => (node: ProseNode) =>
+  node.childCount > 0 && node.firstChild?.type === itemType;
+
 /**
  * The list items the selection covers, and the list holding them — the very
  * range `liftListItem` works on, so "off" lands on exactly what "on" hit.
  */
 function itemRange(state: EditorState, itemType: NodeType) {
   const { $from, $to } = state.selection;
-  return $from.blockRange($to, (node) => node.childCount > 0 && node.firstChild?.type === itemType);
+  return $from.blockRange($to, isListOf(itemType));
 }
 
 /**
@@ -127,79 +133,121 @@ function wrapInKind(
   return true;
 }
 
+function applySetList(
+  ctx: Ctx,
+  kind: ListKind,
+  state: EditorState,
+  dispatch?: (tr: Transaction) => void,
+): boolean {
+  const itemType = listItemSchema.type(ctx);
+  const ordered = orderedListSchema.type(ctx);
+  const targetType = listTypeFor(ctx, kind);
+
+  const range = itemRange(state, itemType);
+  if (!range) return wrapInKind(ctx, kind, state, dispatch);
+
+  const list = range.parent;
+  const items: ProseNode[] = [];
+  for (let i = range.startIndex; i < range.endIndex; i++) items.push(list.child(i));
+
+  // Already exactly this kind: the click means "get me out of the list".
+  if (kindOf(list, items, ordered) === kind) return liftListItem(itemType)(state, dispatch);
+  if (!dispatch) return true;
+
+  const listPos = range.$from.before(range.depth);
+  const wholeList = range.startIndex === 0 && range.endIndex === list.childCount;
+  const tr = state.tr;
+
+  // The list itself can stay: either it is already the right node type
+  // (bullet and task share one) or every item in it is changing.
+  if (list.type === targetType || wholeList) {
+    if (list.type !== targetType) {
+      tr.setNodeMarkup(listPos, targetType, listAttrsFor(kind, list.attrs));
+    }
+    const base = (listAttrsFor(kind, list.attrs).order as number | undefined) ?? 1;
+    list.forEach((item, offset, index) => {
+      if (index < range.startIndex || index >= range.endIndex) return;
+      tr.setNodeMarkup(
+        listPos + 1 + offset,
+        undefined,
+        itemAttrsFor(kind, item.attrs, base + index),
+      );
+    });
+    dispatch(tr.scrollIntoView());
+    return true;
+  }
+
+  // Part of a list, changing node type: markdown cannot say "these three
+  // items are numbered and the rest are not" inside one list, so the list
+  // splits in three — the same three lists the source pane would write.
+  const children: ProseNode[] = [];
+  list.forEach((child) => children.push(child));
+  const head = children.slice(0, range.startIndex);
+  const middle = children.slice(range.startIndex, range.endIndex);
+  const tail = children.slice(range.endIndex);
+  const oldKind: ListKind = list.type === ordered ? 'ordered' : 'bullet';
+
+  const parts: ProseNode[] = [];
+  if (head.length) parts.push(list.type.create(list.attrs, head));
+  parts.push(targetType.create(listAttrsFor(kind, list.attrs), retype(middle, kind, 1)));
+  // The tail becomes a new list of the old kind, so ordered restarts at 1.
+  if (tail.length) {
+    parts.push(list.type.create(listAttrsFor(oldKind, list.attrs), retype(tail, oldKind, 1)));
+  }
+  tr.replaceWith(listPos, listPos + list.nodeSize, parts);
+
+  // Only two positions open ahead of the selection — the boundary closing
+  // the head list and the one opening the list the selection moved into.
+  const shift = head.length ? 2 : 0;
+  const { from, to } = state.selection;
+  dispatch(
+    tr
+      .setSelection(TextSelection.between(tr.doc.resolve(from + shift), tr.doc.resolve(to + shift)))
+      .scrollIntoView(),
+  );
+  return true;
+}
+
+/**
+ * Select-all gives an `AllSelection`, which resolves at the document root and
+ * so carries no block range at all: `applySetList` finds neither a list to
+ * convert nor a wrappable run of blocks, and the three buttons look dead.
+ *
+ * Narrowing it to the text it covers hands the ordinary path something it can
+ * work with — but only when that text sits inside one list, which is the whole
+ * of the gap. Any other document keeps the selection it had, so it takes the
+ * exact same path it always did: this can turn "nothing happened" into a
+ * conversion, and can do nothing else. Without that condition it would also
+ * start editing documents it used to decline — select-all on a page holding
+ * one thematic break would grow an empty bullet on the trailing paragraph.
+ */
+function narrowToList(ctx: Ctx, state: EditorState): TextSelection | null {
+  const { doc } = state;
+  const selection = TextSelection.between(doc.resolve(0), doc.resolve(doc.content.size));
+  if (!(selection instanceof TextSelection)) return null;
+  const range = selection.$from.blockRange(selection.$to, isListOf(listItemSchema.type(ctx)));
+  return range ? selection : null;
+}
+
 export const setListCommand = $command(
   'SetList',
   (ctx) =>
     (kind: ListKind = 'bullet') =>
-    (state, dispatch) => {
-      const itemType = listItemSchema.type(ctx);
-      const ordered = orderedListSchema.type(ctx);
-      const targetType = listTypeFor(ctx, kind);
-
-      const range = itemRange(state, itemType);
-      if (!range) return wrapInKind(ctx, kind, state, dispatch);
-
-      const list = range.parent;
-      const items: ProseNode[] = [];
-      for (let i = range.startIndex; i < range.endIndex; i++) items.push(list.child(i));
-
-      // Already exactly this kind: the click means "get me out of the list".
-      if (kindOf(list, items, ordered) === kind) return liftListItem(itemType)(state, dispatch);
+    (state, dispatch, view) => {
+      const narrowed = state.selection instanceof AllSelection ? narrowToList(ctx, state) : null;
+      if (!narrowed) return applySetList(ctx, kind, state, dispatch);
       if (!dispatch) return true;
 
-      const listPos = range.$from.before(range.depth);
-      const wholeList = range.startIndex === 0 && range.endIndex === list.childCount;
-      const tr = state.tr;
-
-      // The list itself can stay: either it is already the right node type
-      // (bullet and task share one) or every item in it is changing.
-      if (list.type === targetType || wholeList) {
-        if (list.type !== targetType) {
-          tr.setNodeMarkup(listPos, targetType, listAttrsFor(kind, list.attrs));
-        }
-        const base = (listAttrsFor(kind, list.attrs).order as number | undefined) ?? 1;
-        list.forEach((item, offset, index) => {
-          if (index < range.startIndex || index >= range.endIndex) return;
-          tr.setNodeMarkup(
-            listPos + 1 + offset,
-            undefined,
-            itemAttrsFor(kind, item.attrs, base + index),
-          );
-        });
-        dispatch(tr.scrollIntoView());
-        return true;
-      }
-
-      // Part of a list, changing node type: markdown cannot say "these three
-      // items are numbered and the rest are not" inside one list, so the list
-      // splits in three — the same three lists the source pane would write.
-      const children: ProseNode[] = [];
-      list.forEach((child) => children.push(child));
-      const head = children.slice(0, range.startIndex);
-      const middle = children.slice(range.startIndex, range.endIndex);
-      const tail = children.slice(range.endIndex);
-      const oldKind: ListKind = list.type === ordered ? 'ordered' : 'bullet';
-
-      const parts: ProseNode[] = [];
-      if (head.length) parts.push(list.type.create(list.attrs, head));
-      parts.push(targetType.create(listAttrsFor(kind, list.attrs), retype(middle, kind, 1)));
-      // The tail becomes a new list of the old kind, so ordered restarts at 1.
-      if (tail.length) {
-        parts.push(list.type.create(listAttrsFor(oldKind, list.attrs), retype(tail, oldKind, 1)));
-      }
-      tr.replaceWith(listPos, listPos + list.nodeSize, parts);
-
-      // Only two positions open ahead of the selection — the boundary closing
-      // the head list and the one opening the list the selection moved into.
-      const shift = head.length ? 2 : 0;
-      const { from, to } = state.selection;
-      dispatch(
-        tr
-          .setSelection(
-            TextSelection.between(tr.doc.resolve(from + shift), tr.doc.resolve(to + shift)),
-          )
-          .scrollIntoView(),
-      );
-      return true;
+      // Narrowing is dispatched on its own rather than folded into the work,
+      // because the lift branch hands off to `liftListItem`, which reads the
+      // selection out of the state it is given. It costs nothing: a
+      // transaction with no steps is never an undo entry (prosemirror-history
+      // returns early on `steps.length == 0`), so this is still one Ctrl+Z.
+      // Going through the view — rather than `state.apply` — also means the
+      // work runs on the state the editor actually holds, plugin
+      // appendTransactions included.
+      const editorView: EditorView = view ?? ctx.get(editorViewCtx);
+      editorView.dispatch(state.tr.setSelection(narrowed));
+      return applySetList(ctx, kind, editorView.state, dispatch);
     },
 );

@@ -168,6 +168,62 @@ test.describe('list kinds in the WYSIWYG pane (FR-5.2)', () => {
     await expectMarkdown(page, 'alpha');
   });
 
+  // Select-all resolves at the document root, so it carries no block range at
+  // all — the buttons used to look dead after Ctrl+A. The command narrows the
+  // selection to the text it covers before doing anything.
+  test.describe('select-all', () => {
+    test('converts a whole-document list, and lifts it back out', async ({ page }) => {
+      await open(page, '- alpha\n- beta\n');
+      await para(page, 'alpha').click();
+      await page.keyboard.press('ControlOrMeta+a');
+
+      await numbered(page).click();
+      await expectMarkdown(page, '1. alpha\n2. beta');
+
+      await page.keyboard.press('ControlOrMeta+a');
+      await numbered(page).click();
+      await expectMarkdown(page, 'alpha\n\nbeta');
+    });
+
+    test('is still one undo step', async ({ page }) => {
+      // Narrowing dispatches a transaction of its own. It carries no steps, so
+      // history ignores it — one press stays one Ctrl+Z.
+      await open(page, '- alpha\n- beta\n');
+      await para(page, 'alpha').click();
+      await page.keyboard.press('ControlOrMeta+a');
+
+      await numbered(page).click();
+      await expectMarkdown(page, '1. alpha\n2. beta');
+
+      await wys(page).click();
+      await page.keyboard.press('ControlOrMeta+z');
+      await expectMarkdown(page, '- alpha\n- beta');
+    });
+
+    test('wraps a document of loose paragraphs', async ({ page }) => {
+      await open(page, 'alpha\n\nbeta\n');
+      await para(page, 'alpha').click();
+      await page.keyboard.press('ControlOrMeta+a');
+
+      await bullet(page).click();
+      await expectMarkdown(page, '- alpha\n- beta');
+    });
+
+    test('leaves a document it cannot convert exactly as it was', async ({ page }) => {
+      // A heading cannot be a list item's first child (`paragraph block*`), so
+      // there is no legal wrapping for this mixture. Declining has to leave
+      // every byte alone — a half-applied structural edit is the one outcome
+      // worse than doing nothing.
+      const mixed = '# Title\n\nalpha\n\n- one\n- two\n';
+      await open(page, mixed);
+      await para(page, 'alpha').click();
+      await page.keyboard.press('ControlOrMeta+a');
+
+      await numbered(page).click();
+      await expectMarkdown(page, '# Title\n\nalpha\n\n- one\n- two');
+    });
+  });
+
   test('a tight list stays tight through a conversion (D13)', async ({ page }) => {
     // `syncListOrderPlugin` retypes a bullet list whose items claim to be
     // ordered, and writes a STRING `spread` doing it — which serializes every

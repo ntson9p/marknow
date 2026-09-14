@@ -14,7 +14,6 @@ import {
   Redo2,
   Sigma,
   Strikethrough,
-  Table,
   Undo2,
 } from 'lucide-react';
 
@@ -32,7 +31,9 @@ import { cn } from '@/lib/utils';
 
 import { openSourcePopover } from './views/source-popover';
 import type { BlockType, WysiwygSelectionState } from './selection-state';
+import { TableSizePicker } from './TableSizePicker';
 import { createRichToolbarCommands } from './toolbar-commands';
+import { ToolbarButton } from './ToolbarButton';
 
 const BLOCK_TYPE_LABELS: Record<BlockType, string> = {
   paragraph: 'Paragraph',
@@ -67,41 +68,6 @@ interface ToolbarProps {
    * WYSIWYG mode, where the toolbar is Milkdown-only.
    */
   source?: SourceTarget;
-}
-
-function ToolbarButton({
-  label,
-  active = false,
-  disabled = false,
-  onClick,
-  children,
-}: {
-  label: string;
-  active?: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      aria-pressed={active}
-      disabled={disabled}
-      // Keep focus in the editor; commands act on the current selection.
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
-      className={cn(
-        'inline-flex size-8 items-center justify-center rounded-md text-sm transition-colors',
-        'hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-40',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        active && 'bg-accent text-accent-foreground',
-      )}
-    >
-      {children}
-    </button>
-  );
 }
 
 function Divider() {
@@ -265,14 +231,11 @@ export function WysiwygToolbar({ editor, state, source }: ToolbarProps) {
 
         <Divider />
 
-        <ToolbarButton
-          label="Insert table"
+        <TableSizePicker
           active={shown.inTable}
           disabled={disabled}
-          onClick={() => commands.table()}
-        >
-          <Table className="size-4" />
-        </ToolbarButton>
+          onPick={(rows, cols) => commands.table(rows, cols)}
+        />
         <ToolbarButton
           label="Insert image"
           disabled={disabled}

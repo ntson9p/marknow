@@ -20,14 +20,16 @@ const DIAGRAM_STARTER = 'graph TD\n  A[Start] --> B[End]';
 const MERMAID_OPEN = '```mermaid\n';
 
 /**
- * Empty 3×3 table exactly as the WYSIWYG serializer would emit it under the
- * current table-style pref (FR-13.2), so a table inserted from either pane
- * round-trips byte-identically.
+ * Empty `rows`×`cols` table exactly as the WYSIWYG serializer would emit it
+ * under the current table-style pref (FR-13.2), so a table inserted from either
+ * pane round-trips byte-identically. Row one is the header the delimiter row
+ * under it describes, so a table is never shorter than two rows.
  */
-function tableStarter(): string {
+function tableStarter(rows: number, cols: number): string {
   const aligned = useSettingsStore.getState().markdownStyle.tableAlign;
-  const row = aligned ? '|   |   |   |' : '| | | |';
-  return [row, '| - | - | - |', row, row].join('\n');
+  const row = '|' + (aligned ? '   |' : ' |').repeat(cols);
+  const delimiter = '|' + ' - |'.repeat(cols);
+  return [row, delimiter, ...Array<string>(rows - 1).fill(row)].join('\n');
 }
 
 interface InsertBlockOptions {
@@ -78,7 +80,11 @@ function insertBlock(view: EditorView, block: string, options: InsertBlockOption
   return true;
 }
 
-const insertTable: Command = (view) => insertBlock(view, tableStarter(), { inner: { from: 2 } });
+/** The caret lands in the first header cell, two columns past its pipe. */
+const insertTable =
+  (rows: number, cols: number): Command =>
+  (view) =>
+    insertBlock(view, tableStarter(rows, cols), { inner: { from: 2 } });
 
 /** `---` with the caret parked on the line below, like the WYSIWYG insert. */
 const insertHorizontalRule: Command = (view) => insertBlock(view, '---\n', { inner: { from: 4 } });
@@ -184,7 +190,7 @@ export function createSourceToolbarCommands(view: EditorView): ToolbarCommands {
     bulletList: () => exec(formatCommands.bulletList),
     orderedList: () => exec(formatCommands.orderedList),
     taskList: () => exec(formatCommands.taskList),
-    table: () => exec(insertTable),
+    table: (rows, cols) => exec(insertTable(rows, cols)),
     image: (src: string) => {
       const { from, to } = view.state.selection.main;
       const alt = view.state.sliceDoc(from, to);

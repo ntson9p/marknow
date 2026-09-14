@@ -59,6 +59,16 @@ export async function stubFsa(page: Page) {
   });
 }
 
+/**
+ * Insert a table from the toolbar (FR-5.2): the button opens the size grid and
+ * the cell clicked is the size inserted. `rows` counts the header row, so the
+ * default is the 3×3 the button used to insert on its own.
+ */
+export async function insertTable(page: Page, rows = 3, cols = 3) {
+  await page.getByTestId('wysiwyg-toolbar').getByRole('button', { name: 'Insert table' }).click();
+  await page.getByTestId('table-size-picker').locator(`[data-cell="${rows}x${cols}"]`).click();
+}
+
 /** Pin the theme before boot so contrast scans are deterministic. */
 export async function pinTheme(page: Page, theme: 'light' | 'dark') {
   await page.addInitScript((t) => {

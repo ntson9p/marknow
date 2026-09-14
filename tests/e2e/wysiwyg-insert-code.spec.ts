@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { getFakeDisk, seedFakeFile, stubFsa } from './helpers';
+import { getFakeDisk, insertTable, seedFakeFile, stubFsa } from './helpers';
 
 /**
  * The toolbar's code button (and Ctrl+E) with no selection. Upstream's
@@ -118,7 +118,7 @@ test.describe('Code button with no selection (FR-5.2)', () => {
     page,
   }) => {
     await newWysiwygDoc(page);
-    await page.getByTestId('wysiwyg-toolbar').getByLabel('Insert table').click();
+    await insertTable(page);
     await editor(page).locator('th').first().click();
 
     await codeButton(page).click();

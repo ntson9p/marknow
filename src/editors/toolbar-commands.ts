@@ -1,6 +1,14 @@
 import type { BlockType } from '@/editors/wysiwyg/selection-state';
 
 /**
+ * Smallest table either pane may insert: GFM needs a header row, and the
+ * WYSIWYG schema spells the rest out as `table_header_row table_row+`, so a
+ * header on its own is not a table. Milkdown's own `|3x3|` input rule clamps
+ * the same way.
+ */
+export const MIN_TABLE_ROWS = 2;
+
+/**
  * Everything the formatting toolbar can ask an editor pane to do.
  *
  * Two implementations exist — `createRichToolbarCommands` (Milkdown) and
@@ -22,8 +30,11 @@ export interface ToolbarCommands {
   bulletList(): void;
   orderedList(): void;
   taskList(): void;
-  /** Insert a 3×3 table. */
-  table(): void;
+  /**
+   * Insert an empty table `rows` rows tall — the first one is the header —
+   * and `cols` columns wide. Never fewer than `MIN_TABLE_ROWS` rows.
+   */
+  table(rows: number, cols: number): void;
   image(src: string): void;
   mathInline(): void;
   quote(): void;

@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-import { getFakeDisk, seedFakeFile, stubFsa } from './helpers';
+import { getFakeDisk, insertTable, seedFakeFile, stubFsa } from './helpers';
 
 /** A nontrivial document exercising most of the flavor table (§6). */
 const README = [
@@ -143,7 +143,7 @@ test.describe('WYSIWYG mode (FR-5)', () => {
 
   test('table insert renders an editable table (FR-5.2, FR-5.7)', async ({ page }) => {
     await newWysiwygDoc(page);
-    await page.getByRole('button', { name: 'Insert table' }).click();
+    await insertTable(page);
     // The NodeView renders the rows into `table.mk-table-grid > tbody`.
     await expect(editor(page).locator('table.mk-table-grid')).toBeVisible();
     expect(await editor(page).locator('table.mk-table-grid tr').count()).toBe(3);

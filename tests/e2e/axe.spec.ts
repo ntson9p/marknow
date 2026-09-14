@@ -67,6 +67,15 @@ test.describe('accessibility audit (axe, no serious violations)', () => {
     expect(v.length, summarize(v)).toBe(0);
   });
 
+  test('table size picker', async ({ page }) => {
+    await openDoc(page, 'wysiwyg');
+    await expect(page.locator('.ProseMirror')).toBeVisible({ timeout: 30000 });
+    await page.getByTestId('wysiwyg-toolbar').getByRole('button', { name: 'Insert table' }).click();
+    await expect(page.getByTestId('table-size-picker')).toBeVisible();
+    const v = await scanSerious(page);
+    expect(v.length, summarize(v)).toBe(0);
+  });
+
   test('metadata dialog', async ({ page }) => {
     await stubFsa(page);
     await seedFakeFile(page, 'doc.md', '---\ntitle: T\ntags: [a, b]\n---\n\n# Doc\n');

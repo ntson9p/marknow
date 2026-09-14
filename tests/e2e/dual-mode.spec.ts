@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { getFakeDisk, pinMode, seedFakeFile, stubFsa } from './helpers';
+import { getFakeDisk, insertTable, pinMode, seedFakeFile, stubFsa } from './helpers';
 
 /** Dual mode & sync (FR-6, plan §2). Raw (CodeMirror) left, WYSIWYG (Milkdown)
  *  right, both editing one store through the origin/version/equality guards. */
@@ -186,7 +186,7 @@ test.describe('dual-mode toolbar drives the last-focused pane', () => {
     await openDual(page, 'dual.md', 'intro\n');
     await raw(page).click();
     await page.keyboard.press('ControlOrMeta+End');
-    await toolbar(page).getByRole('button', { name: 'Insert table' }).click();
+    await insertTable(page);
     // Compact table style (FR-13.2 default) — matches the WYSIWYG serializer.
     await expect(raw(page)).toContainText('| - | - | - |');
     // Milkdown's table nodeview keeps a hidden helper <table>; match by role.

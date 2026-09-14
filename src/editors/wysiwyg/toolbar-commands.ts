@@ -74,7 +74,7 @@ export function createRichToolbarCommands(editor: Editor | null): ToolbarCommand
     bulletList: () => run(setListCommand.key, 'bullet'),
     orderedList: () => run(setListCommand.key, 'ordered'),
     taskList: () => run(setListCommand.key, 'task'),
-    table: () => run(insertTableCommand.key, { row: 3, col: 3 }),
+    table: (rows: number, cols: number) => run(insertTableCommand.key, { row: rows, col: cols }),
     image: (src: string) => run(insertImageCommand.key, { src }),
     mathInline: () => run(insertMathInlineCommand.key, ''),
     quote: () => run(wrapInBlockquoteCommand.key),

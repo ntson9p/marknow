@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-import { getFakeDisk, seedFakeFile, stubFsa } from './helpers';
+import { getFakeDisk, insertTable, seedFakeFile, stubFsa } from './helpers';
 
 /**
  * Enter, Shift+Enter and Tab inside a table (FR-5.7). Live-typing behaviour,
@@ -24,7 +24,7 @@ async function docWithTable(page: Page) {
   // cold-compiles on first navigation under parallel load.
   await expect(editor(page)).toBeVisible({ timeout: 30000 });
   await editor(page).click();
-  await page.getByRole('button', { name: 'Insert table' }).click();
+  await insertTable(page);
   await expect(cells(page)).toHaveCount(9);
 }
 

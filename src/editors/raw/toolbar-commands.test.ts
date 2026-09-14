@@ -77,17 +77,29 @@ describe('createSourceToolbarCommands (dual-mode toolbar → source pane)', () =
     expect(view.state.doc.toString()).toBe('> [!note]\n> line a\n> line b');
   });
 
-  it('inserts a 3×3 table (compact style, FR-13.2 default) with the caret in the first cell', () => {
+  it('inserts the picked size (compact style, FR-13.2 default) with the caret in the first cell', () => {
     const view = makeView('', 0);
-    createSourceToolbarCommands(view).table();
+    createSourceToolbarCommands(view).table(3, 3);
     expect(view.state.doc.toString()).toBe('| | | |\n| - | - | - |\n| | | |\n| | | |');
     expect(view.state.selection.main.head).toBe(2);
+  });
+
+  it('sizes the table to the picked rows and columns, header row included', () => {
+    const view = makeView('', 0);
+    createSourceToolbarCommands(view).table(2, 5);
+    expect(view.state.doc.toString()).toBe('| | | | | |\n| - | - | - | - | - |\n| | | | | |');
+  });
+
+  it('builds the smallest table the picker offers as a header over one row', () => {
+    const view = makeView('', 0);
+    createSourceToolbarCommands(view).table(2, 1);
+    expect(view.state.doc.toString()).toBe('| |\n| - |\n| |');
   });
 
   it('pads a table with blank lines when inserted between paragraphs', () => {
     const doc = 'para one\n\npara two';
     const view = makeView(doc, 9); // caret on the empty line
-    createSourceToolbarCommands(view).table();
+    createSourceToolbarCommands(view).table(3, 3);
     expect(view.state.doc.toString()).toBe(
       'para one\n\n| | | |\n| - | - | - |\n| | | |\n| | | |\n\npara two',
     );

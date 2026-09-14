@@ -122,7 +122,7 @@ Requirement IDs are stable and referenced by the implementation plan. "Must" = v
 - **FR-5.1** Full editing of the supported flavor with **no markdown syntax visible**: headings, emphasis, links (edit popover), lists, task lists, blockquotes, callouts, tables, code blocks (with language picker + highlighting), math, images, horizontal rules, footnotes.
 - **FR-5.2** **Fixed toolbar**: undo/redo, block-type dropdown (paragraph/H1–H6/quote/code), bold, italic, strikethrough, inline code, link, list buttons, task list, table insert, image insert, math insert, more-menu. Reflects the current selection state.
 - **FR-5.3** **Keyboard shortcuts**: the Google-Docs/standard set (§9.3) plus **markdown autoformat input rules** — typing `## `, `- `, `1. `, `> `, `` ``` ``, `**bold**`, `$math$` transforms live.
-- **FR-5.4** **Bubble menu** on text selection: bold, italic, strikethrough, code, link, and turn-into. Serves as the primary formatting surface on touch devices.
+- **FR-5.4** **Bubble menu** on text selection: bold, italic, strikethrough, code, link, and turn-into. Serves as the primary formatting surface on touch devices. Off by default; shown when the quick-actions preference asks for it (FR-13.3).
 - **FR-5.5** **Slash commands**: `/` opens a filterable insert menu (headings, lists, table, code block, math block, mermaid, callout, image, divider…).
 - **FR-5.6** **Drag handles**: hover grip per block for reordering with drop indicator; `+` affordance to insert a block below.
 - **FR-5.7** **Tables**: add/remove row/column, header row toggle, column alignment, Tab navigation between cells — via a table-scoped toolbar/popover.
@@ -180,7 +180,7 @@ Requirement IDs are stable and referenced by the implementation plan. "Must" = v
 
 - **FR-13.1** Theme: light / dark / system, instant switch, applied across editors and preview.
 - **FR-13.2** Markdown style preferences (drives D13 normalization): bullet marker (`-`/`*`/`+`), emphasis marker (`*`/`_`), fence style, list indent, rule style. Defaults: `-`, `*`, backticks.
-- **FR-13.3** Editor preferences: font size, line numbers, default mode, draft-autosave interval.
+- **FR-13.3** Editor preferences: font size, line numbers, default mode, draft-autosave interval, quick actions on selection (the FR-5.4 bubble menu; default hidden).
 - **FR-13.4** All settings persist locally; a "Reset to defaults" exists.
 
 ## 6. Markdown flavor specification (normative)

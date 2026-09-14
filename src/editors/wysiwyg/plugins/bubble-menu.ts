@@ -15,6 +15,8 @@ import { tooltipFactory, TooltipProvider } from '@milkdown/kit/plugin/tooltip';
 import { TextSelection } from '@milkdown/kit/prose/state';
 import type { EditorView } from '@milkdown/kit/prose/view';
 
+import { useSettingsStore } from '@/features/settings/store';
+
 import { computeSelectionState, type BlockType } from '../selection-state';
 import { triggerLinkEdit } from '../shortcuts';
 import { icons } from './icons';
@@ -24,6 +26,10 @@ import { icons } from './icons';
  * surface — bold, italic, strikethrough, inline code, link, and a "turn into"
  * block-type control. Built on the tooltip plugin (flip/shift middleware ship
  * in the provider), so it is the primary formatting surface on touch (FR-5.4).
+ *
+ * Opt-in (FR-13): the bubble covers the words it was summoned for, and every
+ * action on it is also on the always-visible toolbar — so it stays hidden
+ * until the `bubbleMenu` preference asks for it.
  */
 export const bubbleTooltip = tooltipFactory('marknow-bubble');
 
@@ -40,6 +46,7 @@ class BubbleMenuView {
   readonly #markButtons: MarkButton[] = [];
   readonly #turnInto: HTMLSelectElement;
   #unwatchLinkMode: () => void = () => {};
+  #unwatchPref: () => void = () => {};
   /**
    * The link editor takes focus without producing a transaction, and a DOM
    * focus change alone never reaches a ProseMirror plugin — so re-evaluate
@@ -170,12 +177,20 @@ class BubbleMenuView {
     this.#unwatchLinkMode = ctx.use(linkTooltipState.key).on(({ mode }) => {
       if (mode === 'edit') this.#provider.hide();
     });
+    // Toggling the preference changes neither the document nor the selection,
+    // so nothing in the editor would re-evaluate the menu on its own: ask the
+    // provider directly, and the bubble appears (or leaves) as the switch flips.
+    this.#unwatchPref = useSettingsStore.subscribe((s, prev) => {
+      if (s.bubbleMenu !== prev.bubbleMenu) this.#provider.update(this.#view);
+    });
     view.dom.addEventListener('focus', this.#onEditorFocus);
 
     this.update(view);
   }
 
   #shouldShow(view: EditorView): boolean {
+    // Cheapest test first, and the one that overrules the rest.
+    if (!useSettingsStore.getState().bubbleMenu) return false;
     const { state } = view;
     const { selection } = state;
     const { empty, from, to } = selection;
@@ -210,6 +225,7 @@ class BubbleMenuView {
 
   destroy() {
     this.#unwatchLinkMode();
+    this.#unwatchPref();
     this.#view.dom.removeEventListener('focus', this.#onEditorFocus);
     this.#provider.destroy();
     this.#content.remove();

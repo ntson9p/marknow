@@ -21,8 +21,23 @@ describe('settings store (FR-13)', () => {
     expect(useSettingsStore.getState().diagramScroll).toBe(false);
   });
 
+  it('keeps the quick-action bubble hidden until asked for', () => {
+    // Hidden is the default: the bubble covers the words it was summoned for,
+    // and the toolbar already offers everything on it.
+    expect(useSettingsStore.getState().bubbleMenu).toBe(false);
+
+    useSettingsStore.getState().setBubbleMenu(true);
+    expect(useSettingsStore.getState().bubbleMenu).toBe(true);
+
+    useSettingsStore.getState().resetToDefaults();
+    expect(useSettingsStore.getState().bubbleMenu).toBe(false);
+  });
+
   it('persists under the shared settings key', () => {
     useSettingsStore.getState().setDiagramScroll(true);
-    expect(localStorage.getItem('marknow.settings')).toContain('"diagramScroll":true');
+    useSettingsStore.getState().setBubbleMenu(true);
+    const stored = localStorage.getItem('marknow.settings');
+    expect(stored).toContain('"diagramScroll":true');
+    expect(stored).toContain('"bubbleMenu":true');
   });
 });

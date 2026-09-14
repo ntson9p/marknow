@@ -115,8 +115,10 @@ blocks, tables, math blocks, Mermaid diagrams, dividers and images. Keep typing 
 
 ### 4. Format without leaving the sentence
 
-Select text and a bubble menu appears with bold, italic, strikethrough, inline code, link,
-and a block-type dropdown. The status bar counts your selection as you go.
+Turn on **Show quick actions on selection** in Settings and selecting text pops a bubble
+menu with bold, italic, strikethrough, inline code, link, and a block-type dropdown. It
+starts off, so a selection stays unobscured until you ask for it — the same commands are
+always on the toolbar. The status bar counts your selection as you go.
 
 ![Text selected mid-paragraph with a floating toolbar above it offering bold, italic, strikethrough, code and link, and the status bar reading "3 words selected · 22 chars"](docs/screenshots/bubble-menu.png)
 
@@ -177,8 +179,9 @@ the whole document as rich text and paste it into Google Docs, Word or an email.
 
 ### 10. It works on a phone
 
-Single pane, touch formatting through the bubble menu, and the same rendering — diagrams
-and math included. The toolbar stays above the virtual keyboard.
+Single pane, the same rendering — diagrams and math included — and a toolbar that stays
+above the virtual keyboard. Turn quick actions on in Settings for touch formatting straight
+from the selection.
 
 <div align="center">
   <img src="docs/screenshots/mobile.png" alt="MarkNow on a phone screen showing a rendered Mermaid flowchart and a KaTeX formula in a single-column layout" width="300">

@@ -22,6 +22,15 @@ interface SettingsState {
    * out side by side) otherwise renders at ~0.3 and its labels are unreadable.
    */
   diagramScroll: boolean;
+  /**
+   * Show the quick-action bubble over a text selection (FR-5.4).
+   *
+   * Hidden by default: it lands on top of the very words just selected, and
+   * everything it offers is also on the always-visible toolbar and its
+   * shortcut. Turn it on where reaching that toolbar costs the most — touch,
+   * where the bubble is the primary formatting surface (FR-5.4).
+   */
+  bubbleMenu: boolean;
 
   setMarkdownStyle: (patch: Partial<MarkdownStylePrefs>) => void;
   setFontSize: (px: number) => void;
@@ -29,6 +38,7 @@ interface SettingsState {
   setDefaultMode: (mode: EditorMode) => void;
   setDraftIntervalMs: (ms: number) => void;
   setDiagramScroll: (on: boolean) => void;
+  setBubbleMenu: (on: boolean) => void;
   resetToDefaults: () => void;
 }
 
@@ -39,6 +49,7 @@ const DEFAULTS = {
   defaultMode: 'wysiwyg' as EditorMode,
   draftIntervalMs: 1000,
   diagramScroll: false,
+  bubbleMenu: false,
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -52,6 +63,7 @@ export const useSettingsStore = create<SettingsState>()(
       setDefaultMode: (defaultMode) => set({ defaultMode }),
       setDraftIntervalMs: (draftIntervalMs) => set({ draftIntervalMs }),
       setDiagramScroll: (diagramScroll) => set({ diagramScroll }),
+      setBubbleMenu: (bubbleMenu) => set({ bubbleMenu }),
       resetToDefaults: () => set({ ...DEFAULTS }),
     }),
     {

@@ -33,12 +33,17 @@ const STEADY = `
   .ProseMirror-gapcursor { display: none !important; }
 `;
 
-/** Seed theme, persisted UI state, and the fake disk before the app boots. */
-async function seed(page, theme, ui) {
+/** Seed theme, persisted UI + settings state, and the fake disk before boot. */
+async function seed(page, theme, ui, settings = {}) {
   await page.addInitScript(
-    ([t, uiState, name, text]) => {
+    ([t, uiState, prefs, name, text]) => {
       localStorage.setItem('marknow.theme', t);
       localStorage.setItem('marknow.ui', JSON.stringify({ version: 0, state: uiState }));
+      // Only when a shot asks for a non-default preference — an empty object
+      // would still pin every default, and defaults are what most shots show.
+      if (Object.keys(prefs).length) {
+        localStorage.setItem('marknow.settings', JSON.stringify({ version: 0, state: prefs }));
+      }
       const files = { [name]: text };
       const handle = (n) => ({
         kind: 'file',
@@ -58,7 +63,7 @@ async function seed(page, theme, ui) {
       window.showOpenFilePicker = async () => [handle(name)];
       window.showSaveFilePicker = async (o) => handle(o?.suggestedName ?? 'untitled.md');
     },
-    [theme, ui, FILE, DOC],
+    [theme, ui, settings, FILE, DOC],
   );
 }
 
@@ -75,9 +80,12 @@ async function newPage(browser, { theme = 'light', viewport, mobile = false } = 
 }
 
 /** Boot the app with the demo document already open. */
-async function openDoc(browser, { theme = 'light', ui = {}, viewport, mobile } = {}) {
+async function openDoc(
+  browser,
+  { theme = 'light', ui = {}, settings = {}, viewport, mobile } = {},
+) {
   const { context, page } = await newPage(browser, { theme, viewport, mobile });
-  await seed(page, theme, { mode: 'wysiwyg', ...ui });
+  await seed(page, theme, { mode: 'wysiwyg', ...ui }, settings);
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.addStyleTag({ content: STEADY });
   await page.getByTestId('welcome-open').click();
@@ -223,7 +231,11 @@ const SHOTS = {
 
   /** Selection bubble menu: formatting without leaving the text. */
   async 'bubble-menu'(browser) {
-    const { context, page } = await openDoc(browser, { ui: { mode: 'wysiwyg' } });
+    // Opt-in (FR-13) — the shot is of the feature, so it turns it on.
+    const { context, page } = await openDoc(browser, {
+      ui: { mode: 'wysiwyg' },
+      settings: { bubbleMenu: true },
+    });
     await settle(page);
     await scrollTo(page, 'Rollback');
     const phrase = 'five consecutive minutes';

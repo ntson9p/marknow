@@ -7,6 +7,20 @@ import { seedFakeFile, stubFsa } from './helpers';
 
 const editor = (page: Page) => page.locator('.ProseMirror');
 
+/**
+ * The bubble is opt-in (FR-13), so every test that expects to see it says so
+ * before the app boots. Seeds the persisted settings rather than clicking
+ * through the dialog: the subject here is the bubble, not the switch.
+ */
+async function showQuickActions(page: Page) {
+  await page.addInitScript(() => {
+    const raw = window.localStorage.getItem('marknow.settings');
+    const persisted = raw ? JSON.parse(raw) : { state: {} };
+    persisted.state = { ...persisted.state, bubbleMenu: true };
+    window.localStorage.setItem('marknow.settings', JSON.stringify({ version: 0, ...persisted }));
+  });
+}
+
 async function newWysiwygDoc(page: Page) {
   await page.goto('/');
   await page.getByTestId('welcome-new').click();
@@ -26,6 +40,7 @@ test.describe('WYSIWYG UX polish (M4)', () => {
   });
 
   test('bubble menu formats a selection and reflects state (FR-5.4)', async ({ page }) => {
+    await showQuickActions(page);
     await newWysiwygDoc(page);
     await page.keyboard.type('format me please');
     // Select the line as a TextSelection (Ctrl+A yields an AllSelection, which
@@ -53,8 +68,20 @@ test.describe('WYSIWYG UX polish (M4)', () => {
   });
 
   test('bubble menu is hidden without a selection', async ({ page }) => {
+    await showQuickActions(page);
     await newWysiwygDoc(page);
     await page.keyboard.type('no selection here');
+    await expect(page.locator('.milkdown-bubble-menu')).toHaveAttribute('data-show', 'false');
+  });
+
+  // Default-off (FR-13): a selection is exactly the condition that would
+  // summon the bubble, so it is the only one that proves the preference gates
+  // it rather than some accident of focus.
+  test('no bubble menu on a selection until the preference asks for one', async ({ page }) => {
+    await newWysiwygDoc(page);
+    await page.keyboard.type('format me please');
+    await page.keyboard.press('Home');
+    await page.keyboard.press('Shift+End');
     await expect(page.locator('.milkdown-bubble-menu')).toHaveAttribute('data-show', 'false');
   });
 
@@ -221,6 +248,7 @@ test.describe('WYSIWYG UX polish (M4)', () => {
     const linkInput = (page: Page) => page.locator('.milkdown-link-edit .input-area');
 
     async function selectedThenLink(page: Page) {
+      await showQuickActions(page);
       await newWysiwygDoc(page);
       await page.keyboard.type('hello world');
       // A TextSelection, not the AllSelection that Ctrl+A yields.

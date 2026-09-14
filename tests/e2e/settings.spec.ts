@@ -34,6 +34,13 @@ async function open(page: Page) {
   await page.getByTestId('welcome-open').click();
 }
 
+/** Put a text selection on the heading — the bubble's one trigger. */
+async function selectHeading(page: Page) {
+  await page.locator('.ProseMirror h2').click();
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Shift+End');
+}
+
 /** Does this diagram overflow its own box? */
 async function scrolls(page: Page) {
   return page.evaluate(() => {
@@ -104,5 +111,47 @@ test.describe('settings (FR-13)', () => {
     await page.getByTestId('setting-diagram-scroll').click();
     await page.keyboard.press('Escape');
     expect(await scrolls(page)).toBe(false);
+  });
+
+  test('the quick-actions switch is off by default, and reports its state', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('settings-open').click();
+
+    const toggle = page.getByTestId('setting-bubble-menu');
+    await expect(toggle).toHaveAttribute('role', 'switch');
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await expect(toggle).toHaveAccessibleName(/Show quick actions on selection/);
+  });
+
+  test('turning quick actions on brings the bubble back at once, and persists', async ({
+    page,
+  }) => {
+    await open(page);
+    await selectHeading(page);
+    await expect(page.locator('.milkdown-bubble-menu')).toHaveAttribute('data-show', 'false');
+
+    await page.keyboard.press('Control+Comma');
+    await page.getByTestId('setting-bubble-menu').click();
+    await expect(page.getByTestId('setting-bubble-menu')).toHaveAttribute('aria-checked', 'true');
+    await page.keyboard.press('Escape');
+
+    // No reload and no re-created editor: the running bubble watches the store.
+    await selectHeading(page);
+    await expect(page.locator('.milkdown-bubble-menu')).toHaveAttribute('data-show', 'true');
+
+    const stored = await page.evaluate(() => localStorage.getItem('marknow.settings'));
+    expect(stored).toContain('"bubbleMenu":true');
+
+    await page.reload();
+    await page.getByTestId('welcome-open').click();
+    await selectHeading(page);
+    await expect(page.locator('.milkdown-bubble-menu')).toHaveAttribute('data-show', 'true');
+
+    // And away again, without a reload.
+    await page.keyboard.press('Control+Comma');
+    await page.getByTestId('setting-bubble-menu').click();
+    await page.keyboard.press('Escape');
+    await selectHeading(page);
+    await expect(page.locator('.milkdown-bubble-menu')).toHaveAttribute('data-show', 'false');
   });
 });

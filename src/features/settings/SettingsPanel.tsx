@@ -26,6 +26,8 @@ function SettingsDialog() {
   const setDiagramScroll = useSettingsStore((s) => s.setDiagramScroll);
   const tableAlign = useSettingsStore((s) => s.markdownStyle.tableAlign);
   const setMarkdownStyle = useSettingsStore((s) => s.setMarkdownStyle);
+  const bubbleMenu = useSettingsStore((s) => s.bubbleMenu);
+  const setBubbleMenu = useSettingsStore((s) => s.setBubbleMenu);
 
   return (
     <Modal
@@ -41,6 +43,21 @@ function SettingsDialog() {
       }
     >
       <div className="space-y-6" data-testid="settings-panel">
+        <Section title="Editor">
+          <SettingRow
+            label="Show quick actions on selection"
+            hint="Selecting text pops a small toolbar over it — bold, italic, strikethrough, code, link, and turn-into. Off, the selection stays unobscured and those actions remain on the main toolbar and their shortcuts; on, they come to the text, which is the quicker reach on a touch screen."
+          >
+            {(labelId) => (
+              <Switch
+                checked={bubbleMenu}
+                onCheckedChange={setBubbleMenu}
+                aria-labelledby={labelId}
+                data-testid="setting-bubble-menu"
+              />
+            )}
+          </SettingRow>
+        </Section>
         <Section title="Markdown style">
           <SettingRow
             label="Align table columns"

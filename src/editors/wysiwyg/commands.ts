@@ -1,7 +1,6 @@
 import { commandsCtx } from '@milkdown/kit/core';
 import type { Ctx } from '@milkdown/kit/ctx';
 import {
-  bulletListSchema,
   codeBlockSchema,
   inlineCodeSchema,
   toggleInlineCodeCommand,
@@ -14,6 +13,7 @@ import { $command } from '@milkdown/kit/utils';
 
 import { CALLOUT_TYPES, type CalloutType } from '@/core/markdown/callouts';
 
+import { setListCommand } from './list-commands';
 import { calloutSchema } from './nodes/callout';
 import { diagramSchema } from './nodes/diagram';
 import { mathBlockSchema, mathInlineSchema } from './nodes/math';
@@ -86,52 +86,6 @@ export const wrapInCalloutCommand = $command(
       }
       return wrapIn(type, { calloutType })(state, dispatch);
     },
-);
-
-/**
- * Toggle task-list state (FR-5.2): items in the selection become tasks
- * (checked=false); if all are already tasks, they revert to plain items.
- * Outside a list, wraps in a bullet list first.
- */
-export const toggleTaskListCommand = $command(
-  'ToggleTaskList',
-  (ctx) => () => (state, dispatch, view) => {
-    const collectItems = (doc: ProseNode, from: number, to: number) => {
-      const items: { pos: number; node: ProseNode }[] = [];
-      doc.nodesBetween(from, to, (node, pos) => {
-        if (node.type.name === 'list_item') items.push({ pos, node });
-      });
-      return items;
-    };
-
-    const { from, to } = state.selection;
-    let items = collectItems(state.doc, from, to);
-
-    if (items.length === 0) {
-      // Wrap in a bullet list first, then mark the fresh items as tasks.
-      const wrapped = wrapIn(bulletListSchema.type(ctx))(state, dispatch);
-      if (!wrapped || !dispatch || !view) return wrapped;
-      const next = view.state;
-      items = collectItems(next.doc, next.selection.from, next.selection.to);
-      if (items.length === 0) return true;
-      let tr = next.tr;
-      for (const { pos, node } of items) {
-        tr = tr.setNodeMarkup(pos, undefined, { ...node.attrs, checked: false });
-      }
-      dispatch(tr);
-      return true;
-    }
-
-    const makeTasks = items.some(({ node }) => node.attrs.checked == null);
-    if (dispatch) {
-      let tr = state.tr;
-      for (const { pos, node } of items) {
-        tr = tr.setNodeMarkup(pos, undefined, { ...node.attrs, checked: makeTasks ? false : null });
-      }
-      dispatch(tr);
-    }
-    return true;
-  },
 );
 
 /**
@@ -221,6 +175,6 @@ export const wysiwygCommands = [
   insertMathBlockCommand,
   insertDiagramCommand,
   wrapInCalloutCommand,
-  toggleTaskListCommand,
+  setListCommand,
   insertCodeCommand,
 ];

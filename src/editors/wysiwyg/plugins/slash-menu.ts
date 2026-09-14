@@ -6,21 +6,15 @@ import {
   insertHrCommand,
   insertImageCommand,
   wrapInBlockquoteCommand,
-  wrapInBulletListCommand,
   wrapInHeadingCommand,
-  wrapInOrderedListCommand,
 } from '@milkdown/kit/preset/commonmark';
 import { insertTableCommand } from '@milkdown/kit/preset/gfm';
 import { slashFactory, SlashProvider } from '@milkdown/kit/plugin/slash';
 import { TextSelection } from '@milkdown/kit/prose/state';
 import type { EditorView } from '@milkdown/kit/prose/view';
 
-import {
-  insertDiagramCommand,
-  insertMathBlockCommand,
-  toggleTaskListCommand,
-  wrapInCalloutCommand,
-} from '../commands';
+import { insertDiagramCommand, insertMathBlockCommand, wrapInCalloutCommand } from '../commands';
+import { setListCommand } from '../list-commands';
 import { openSourcePopover } from '../views/source-popover';
 import { icons } from './icons';
 
@@ -76,21 +70,21 @@ const SLASH_ITEMS: SlashItem[] = [
     description: 'Unordered list',
     keywords: ['ul', 'unordered', 'bullet'],
     icon: icons.list,
-    run: call(wrapInBulletListCommand),
+    run: call(setListCommand, 'bullet'),
   },
   {
     label: 'Numbered list',
     description: 'Ordered list',
     keywords: ['ol', 'ordered', 'number'],
     icon: icons.listOrdered,
-    run: call(wrapInOrderedListCommand),
+    run: call(setListCommand, 'ordered'),
   },
   {
     label: 'Task list',
     description: 'Checkbox to-do list',
     keywords: ['todo', 'task', 'checkbox'],
     icon: icons.listTodo,
-    run: call(toggleTaskListCommand),
+    run: call(setListCommand, 'task'),
   },
   {
     label: 'Quote',

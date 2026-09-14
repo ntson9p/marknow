@@ -9,9 +9,7 @@ import {
   toggleStrongCommand,
   turnIntoTextCommand,
   wrapInBlockquoteCommand,
-  wrapInBulletListCommand,
   wrapInHeadingCommand,
-  wrapInOrderedListCommand,
 } from '@milkdown/kit/preset/commonmark';
 import { insertTableCommand, toggleStrikethroughCommand } from '@milkdown/kit/preset/gfm';
 
@@ -22,9 +20,9 @@ import {
   insertDiagramCommand,
   insertMathBlockCommand,
   insertMathInlineCommand,
-  toggleTaskListCommand,
   wrapInCalloutCommand,
 } from './commands';
+import { setListCommand } from './list-commands';
 import type { BlockType } from './selection-state';
 import { triggerLinkEdit } from './shortcuts';
 
@@ -73,9 +71,9 @@ export function createRichToolbarCommands(editor: Editor | null): ToolbarCommand
         const view = ctx.get(editorViewCtx);
         triggerLinkEdit(ctx, view.state);
       }),
-    bulletList: () => run(wrapInBulletListCommand.key),
-    orderedList: () => run(wrapInOrderedListCommand.key),
-    taskList: () => run(toggleTaskListCommand.key),
+    bulletList: () => run(setListCommand.key, 'bullet'),
+    orderedList: () => run(setListCommand.key, 'ordered'),
+    taskList: () => run(setListCommand.key, 'task'),
     table: () => run(insertTableCommand.key, { row: 3, col: 3 }),
     image: (src: string) => run(insertImageCommand.key, { src }),
     mathInline: () => run(insertMathInlineCommand.key, ''),

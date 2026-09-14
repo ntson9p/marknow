@@ -2,18 +2,14 @@ import { linkTooltipAPI } from '@milkdown/kit/component/link-tooltip';
 import { commandsCtx } from '@milkdown/kit/core';
 import type { CmdKey } from '@milkdown/kit/core';
 import type { Ctx } from '@milkdown/kit/ctx';
-import {
-  wrapInBlockquoteCommand,
-  wrapInBulletListCommand,
-  wrapInHeadingCommand,
-  wrapInOrderedListCommand,
-} from '@milkdown/kit/preset/commonmark';
+import { wrapInBlockquoteCommand, wrapInHeadingCommand } from '@milkdown/kit/preset/commonmark';
 import { toggleStrikethroughCommand } from '@milkdown/kit/preset/gfm';
 import { keymap } from '@milkdown/kit/prose/keymap';
 import type { EditorState } from '@milkdown/kit/prose/state';
 import { $prose } from '@milkdown/kit/utils';
 
-import { insertCodeCommand, toggleTaskListCommand } from './commands';
+import { insertCodeCommand } from './commands';
+import { setListCommand } from './list-commands';
 
 /**
  * The §9.3 shortcut set for WYSIWYG mode (FR-5.3), on top of the preset
@@ -70,9 +66,9 @@ export const wysiwygKeymap = $prose((ctx) => {
     'Mod-Alt-1': call(wrapInHeadingCommand, 1),
     'Mod-Alt-2': call(wrapInHeadingCommand, 2),
     'Mod-Alt-3': call(wrapInHeadingCommand, 3),
-    'Mod-Shift-8': call(wrapInBulletListCommand),
-    'Mod-Shift-7': call(wrapInOrderedListCommand),
-    'Mod-Shift-9': call(toggleTaskListCommand),
+    'Mod-Shift-8': call(setListCommand, 'bullet'),
+    'Mod-Shift-7': call(setListCommand, 'ordered'),
+    'Mod-Shift-9': call(setListCommand, 'task'),
     'Mod-Shift-b': call(wrapInBlockquoteCommand),
     // Link popover (FR-5.1): edit when the caret is inside a link, create
     // when text is selected.

@@ -33,7 +33,12 @@ function pxPerCh(el: HTMLElement): number {
 
 /** Largest measure that still fits the scroll container, in `ch`. */
 function maxFitting(page: HTMLElement, unit: number): number {
-  const available = (page.parentElement?.clientWidth ?? page.clientWidth) - 32; // 2rem gutter
+  // The measure buys text, not page: the page's own margins are added around it
+  // and have to come off the space a measure can claim, as does the 2rem gutter
+  // the page floats in.
+  const box = getComputedStyle(page);
+  const margins = Number.parseFloat(box.paddingLeft) + Number.parseFloat(box.paddingRight);
+  const available = (page.parentElement?.clientWidth ?? page.clientWidth) - 32 - margins;
   return Math.min(MAX_MEASURE_CH, Math.floor(available / unit));
 }
 

@@ -6,6 +6,34 @@
  * shared `.md-doc` theme (typography.css).
  */
 
+/* ---------- the page ---------- */
+
+/* Side margins of the centred page in WYSIWYG single mode (§8.1), which is the
+ * surface people hold up against Google Docs. Docs lays out a US-Letter sheet:
+ * 8.5in wide with 1in margins, leaving 6.5in to read on. The margin is the half
+ * of that we can state outright — 1in at the 96dpi CSS inch — while the column
+ * itself stays the user's `ch` measure, which at the document font lands within
+ * a few px of 6.5in.
+ *
+ * The margin has to sit *outside* the measure, which is why it is published as
+ * a variable for `WysiwygMode` to add into the page's `max-width`: boxes here
+ * are `border-box`, so capping a padded card at 72ch used to leave 72ch minus
+ * the padding to actually read on, and the column came out a page margin too
+ * narrow.
+ *
+ * Narrow screens get a thumb-width gutter instead. A 1in margin on a phone
+ * would spend most of the screen on blank paper. */
+.wysiwyg-page {
+  --mk-page-margin-x: 1.5rem;
+  padding-inline: var(--mk-page-margin-x);
+}
+
+@media (min-width: 768px) {
+  .wysiwyg-page {
+    --mk-page-margin-x: 6rem;
+  }
+}
+
 /* ---------- editor surface ---------- */
 
 /* Offset parent for the absolutely-positioned block handle (FR-5.6).
